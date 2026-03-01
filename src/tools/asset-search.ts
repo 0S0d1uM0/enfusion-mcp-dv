@@ -30,6 +30,8 @@ const TYPE_FILTER: Record<string, string[]> = {
 /** Cached file index — built once per session */
 let cachedIndex: AssetEntry[] | null = null;
 let cachedBasePath: string | null = null;
+/** Whether the cached index includes GUID data (used to detect stale pre-GUID cache) */
+let cachedHasGuids = false;
 
 /**
  * Parse entity catalog .conf files to build a map of normalized prefab path → GUID.
@@ -139,9 +141,15 @@ function buildIndex(basePath: string, gamePath: string): AssetEntry[] {
     }
   }
 
+  const guidCount = entries.filter((e) => e.guid).length;
   const elapsed = Date.now() - start;
-  logger.info(`Asset index built: ${entries.length} files in ${elapsed}ms`);
+  logger.info(`Asset index built: ${entries.length} files, ${guidCount} with GUIDs, in ${elapsed}ms`);
   return entries;
+}
+
+export function invalidateAssetCache(): void {
+  cachedIndex = null;
+  cachedBasePath = null;
 }
 
 function getIndex(basePath: string, gamePath: string): AssetEntry[] {
@@ -184,9 +192,16 @@ export function registerAssetSearch(server: McpServer, config: Config): void {
           .max(100)
           .default(20)
           .describe("Maximum results to return"),
+        refresh: z
+          .boolean()
+          .default(false)
+          .describe("Force rebuild of the file index (clears cache). Use if results seem stale."),
       },
     },
-    async ({ query, type, limit }) => {
+    async ({ query, type, limit, refresh }) => {
+      if (refresh) {
+        invalidateAssetCache();
+      }
       const basePath = resolveGameDataPath(config);
       if (!basePath) {
         return {
