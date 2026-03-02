@@ -38,7 +38,9 @@ export function registerScenarioTools(server: McpServer, client: WorkbenchClient
         "Place a complete Scenario Framework objective hierarchy in the live Workbench scene. " +
         "Creates Area → LayerTask → Layer_AI → SlotKill + SlotAI entities and wires all cross-references. " +
         "Requires Workbench to be running with a world open. " +
-        "Use for kill/clearArea/destroy tasks that spawn an AI group when a player enters the trigger area.",
+        "Use for kill/clearArea/destroy tasks that spawn an AI group when a player enters the trigger area. " +
+        "targetPrefab is the entity the player must eliminate (character for kill, object for destroy/clearArea). " +
+        "aiGroupPrefab is the GROUP prefab spawned via SlotAI as the attacking force.",
       inputSchema: {
         taskType: z
           .enum(["kill", "clearArea", "destroy"])
@@ -55,10 +57,21 @@ export function registerScenarioTools(server: McpServer, client: WorkbenchClient
         position: z
           .string()
           .describe("World position for the Area entity as 'x y z' (e.g. '1234 0 5678')."),
+        targetPrefab: z
+          .string()
+          .describe(
+            "Prefab path for the entity the player must kill/destroy/clear. " +
+            "For 'kill' type this must be a CHARACTER prefab (e.g. '{GUID}Prefabs/Characters/Factions/OPFOR/USSR_Army/Character_USSR_Unarmed.et'). " +
+            "For 'destroy' type this is a vehicle or object prefab. " +
+            "For 'clearArea' type this is the object prefab to clear. " +
+            "Use asset_search to find the GUID-prefixed path. " +
+            "WARNING: do NOT pass a group prefab here — that causes a NULL pointer crash at runtime."
+          ),
         aiGroupPrefab: z
           .string()
           .describe(
-            "Prefab path for the AI group to spawn (e.g. '{GUID}Prefabs/Groups/OPFOR/Group_USSR_LightFireTeam.et'). " +
+            "Prefab path for the AI group to spawn via SlotAI (e.g. '{GUID}Prefabs/Groups/OPFOR/Group_USSR_LightFireTeam.et'). " +
+            "This must be a GROUP prefab, not a character prefab. " +
             "Use asset_search to find the GUID-prefixed path."
           ),
         triggerRadius: z
@@ -71,7 +84,7 @@ export function registerScenarioTools(server: McpServer, client: WorkbenchClient
           .describe("Faction key that owns this task (e.g. 'US', 'USSR'). Optional."),
       },
     },
-    async ({ taskType, taskName, description, position, aiGroupPrefab, triggerRadius, faction }) => {
+    async ({ taskType, taskName, description, position, targetPrefab, aiGroupPrefab, triggerRadius, faction }) => {
       const p = PREFABS[taskType];
       const names = {
         area:      `${taskName}_Area`,
@@ -132,7 +145,10 @@ export function registerScenarioTools(server: McpServer, client: WorkbenchClient
         }
 
         // 8. Wire Slot — what to spawn / kill
-        await setProp(names.slot, `${p.slotComp}.m_sObjectToSpawn`, aiGroupPrefab);
+        // targetPrefab must be a character prefab for kill type (group prefab causes NULL pointer crash in SCR_TaskKill.OnGroupEmpty)
+        await setProp(names.slot, `${p.slotComp}.m_sObjectToSpawn`, targetPrefab);
+        // Give the target a wait waypoint so it stands in place
+        await setProp(names.slot, `${p.slotComp}.m_sWPToSpawn`, "{531EC45063C1F57B}Prefabs/AI/Waypoints/AIWaypoint_Wait.et");
 
         // 9. Wire SlotAI — group to spawn
         await setProp(names.slotAI, "SCR_ScenarioFrameworkSlotAI.m_sObjectToSpawn", aiGroupPrefab);
@@ -146,7 +162,8 @@ export function registerScenarioTools(server: McpServer, client: WorkbenchClient
           `Task type: ${taskType}`,
           `Position: ${position}`,
           `Trigger radius: ${triggerRadius}m`,
-          `AI group: ${aiGroupPrefab}`,
+          `Target (SlotKill): ${targetPrefab}`,
+          `AI group (SlotAI): ${aiGroupPrefab}`,
           faction ? `Faction: ${faction}` : "",
         ];
 
