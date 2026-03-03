@@ -112,6 +112,13 @@ describe("SearchEngine", () => {
     it("returns undefined for unknown group", () => {
       expect(engine.getGroup("NonExistentGroup12345")).toBeUndefined();
     });
+
+    it("groups contain multiple classes for sibling discovery", () => {
+      const groups = engine.getGroups();
+      const largeGroup = groups.find((g) => g.classes.length > 5);
+      expect(largeGroup).toBeDefined();
+      expect(largeGroup!.classes.length).toBeGreaterThan(5);
+    });
   });
 
   describe("getAllClassNames", () => {
