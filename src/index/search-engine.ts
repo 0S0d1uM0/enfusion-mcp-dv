@@ -38,6 +38,7 @@ export class SearchEngine {
   private enumIndex: Map<string, EnumSearchResult[]> = new Map();
   private propertyIndex: Map<string, PropertySearchResult[]> = new Map();
   private wikiPages: WikiPage[] = [];
+  private wikiPageByTitle: Map<string, WikiPage> = new Map();
   private groups: GroupInfo[] = [];
   private loaded = false;
 
@@ -48,6 +49,9 @@ export class SearchEngine {
   private load(): void {
     const data = loadIndex(this.dataDir);
     this.wikiPages = data.wikiPages;
+    for (const page of this.wikiPages) {
+      this.wikiPageByTitle.set(page.title.toLowerCase(), page);
+    }
     this.groups = data.groups;
 
     const allClasses = [...data.enfusionClasses, ...data.armaClasses];
@@ -396,6 +400,11 @@ export class SearchEngine {
 
     results.sort((a, b) => b.score - a.score);
     return results.slice(0, limit).map((r) => r.page);
+  }
+
+  /** Look up a wiki page by exact title (case-insensitive). */
+  getWikiPage(title: string): WikiPage | undefined {
+    return this.wikiPageByTitle.get(title.toLowerCase());
   }
 
   getGroups(): GroupInfo[] {

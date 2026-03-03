@@ -63,7 +63,7 @@ After implementing any upgrade, complete **all** of the following before marking
 
 ---
 
-### 4. Wiki Full-Text Retrieval
+### ~~4. Wiki Full-Text Retrieval~~ ✅ Done
 
 **What**: Wiki search truncates results to 2,000 characters (`MAX_LENGTH = 2000` in `wiki-search.ts:53`). Add a `wiki_read` tool (or a `fullText` parameter on `wiki_search`) that returns the full page content by title, without truncation. Alternatively, raise the limit substantially when only 1 result matches.
 
@@ -418,7 +418,7 @@ After implementing any upgrade, complete **all** of the following before marking
 | ~~1~~ | ~~Automatic Inheritance Context~~ ✅ | S | Hallucination Prevention | L1 |
 | ~~2~~ | ~~Enum-Aware Search~~ ✅ | S | Context Quality | L1 |
 | ~~3~~ | ~~Related Classes in Search Results~~ ✅ | S | Context Quality | L1 |
-| 4 | Wiki Full-Text Retrieval | S | Context Quality | L1 |
+| ~~4~~ | ~~Wiki Full-Text Retrieval~~ ✅ | S | Context Quality | L1 |
 | 5 | Component Discovery Tool | S | Context Quality | L2 |
 | 6 | Workbench Connection Health | S | UX Polish | L2 |
 | 7 | Pattern Composition | S | Composability | L2 |

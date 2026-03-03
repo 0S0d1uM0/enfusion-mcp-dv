@@ -246,6 +246,51 @@ describe("SearchEngine", () => {
     });
   });
 
+  describe("getWikiPage", () => {
+    it("finds a page by exact title", () => {
+      const page = engine.getWikiPage("Getting Started");
+      expect(page).toBeDefined();
+      expect(page!.title).toBe("Getting Started");
+      expect(page!.content.length).toBeGreaterThan(0);
+    });
+
+    it("is case-insensitive", () => {
+      const page = engine.getWikiPage("getting started");
+      expect(page).toBeDefined();
+      expect(page!.title).toBe("Getting Started");
+    });
+
+    it("returns undefined for non-existent title", () => {
+      expect(engine.getWikiPage("This Page Does Not Exist 12345")).toBeUndefined();
+    });
+
+    it("returns full content without truncation", () => {
+      const page = engine.getWikiPage("Conflict");
+      expect(page).toBeDefined();
+      // Conflict is 6688 chars — well above the old 2000 truncation limit
+      expect(page!.content.length).toBeGreaterThan(2000);
+    });
+  });
+
+  describe("searchWiki", () => {
+    it("finds pages by keyword", () => {
+      const results = engine.searchWiki("replication");
+      expect(results.length).toBeGreaterThan(0);
+      expect(results[0].title).toBeTruthy();
+      expect(results[0].content).toBeTruthy();
+    });
+
+    it("respects limit parameter", () => {
+      const results = engine.searchWiki("game", 3);
+      expect(results.length).toBeLessThanOrEqual(3);
+    });
+
+    it("returns empty for nonsense query", () => {
+      const results = engine.searchWiki("xyzzy99999qqq");
+      expect(results).toEqual([]);
+    });
+  });
+
   describe("getInheritedMembers", () => {
     it("returns inherited methods for GenericEntity", () => {
       const inherited = engine.getInheritedMembers("GenericEntity");

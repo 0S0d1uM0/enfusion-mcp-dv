@@ -84,7 +84,7 @@ This file is the handoff document. A future Claude instance with zero context wi
   - Use **game_read** to read any game file — scripts, prefabs, configs — directly from .pak archives
   - Use **api_search** to look up class definitions, methods, and properties
 
-- **Wiki content is pre-downloaded** and available via the **wiki_search** tool. Do NOT try to fetch wiki pages from the web or reference URLs on the Bohemia Interactive Wiki. Use **wiki_search** for all tutorial and guide content about Enfusion engine concepts, scripting patterns, and Arma Reforger modding topics.
+- **Wiki content is pre-downloaded** and available via the **wiki_search** tool. Do NOT try to fetch wiki pages from the web or reference URLs on the Bohemia Interactive Wiki. Use **wiki_search** for all tutorial and guide content about Enfusion engine concepts, scripting patterns, and Arma Reforger modding topics. When you need the full page content (especially code examples), use **wiki_read** with the page title from the search results.
 
 ## CRITICAL: API VERIFICATION RULE
 
