@@ -91,7 +91,7 @@ After implementing any upgrade, complete **all** of the following before marking
 
 ---
 
-### 6. Workbench Connection Health in Tool Descriptions
+### ~~6. Workbench Connection Health in Tool Descriptions~~ ✅ Done
 
 **What**: Make `wb_state` a lightweight pre-check that other `wb_*` tools can reference. Add a `connectionStatus` field to all `wb_*` tool responses that shows whether Workbench is connected, in play mode, or in edit mode — so Claude doesn't blindly call `wb_play` when already in play mode or call `wb_entity_create` when in play mode (which fails).
 
