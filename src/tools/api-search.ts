@@ -216,7 +216,9 @@ function formatEnumResult(results: EnumSearchResult[]): string {
   for (let i = 0; i < results.length; i++) {
     const r = results[i];
     const sourceLabel = r.classSource === "enfusion" ? "Enfusion Engine" : "Arma Reforger";
-    lines.push(`${i + 1}. **${r.enumInfo.name}** (in ${r.className})`);
+    const isEnumLike = r.enumInfo.description.startsWith("[Enum-like class]");
+    const label = isEnumLike ? "enum-like class" : `in ${r.className}`;
+    lines.push(`${i + 1}. **${r.enumInfo.name}** (${label})`);
     if (r.enumInfo.description) {
       lines.push(`   ${r.enumInfo.description}`);
     }
