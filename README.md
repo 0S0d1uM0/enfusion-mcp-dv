@@ -93,6 +93,7 @@ Work without Workbench running — API search, mod scaffolding, code generation,
 |------|-------------|
 | `api_search` | Search 8,693 Enfusion/Arma Reforger API classes and methods — includes inherited members, enum-like class detection, and related sibling classes |
 | `wiki_search` | Search 250+ tutorials and guides from the Enfusion engine docs and BI Community Wiki |
+| `wiki_read` | Read the full content of a wiki page by title — no truncation, includes code examples |
 | `game_browse` | Browse base game files — loose files and `.pak` archives transparently |
 | `game_read` | Read base game files — scripts, prefabs, configs from loose files or `.pak` |
 | `asset_search` | Search game assets by name across loose files and `.pak` archives |
