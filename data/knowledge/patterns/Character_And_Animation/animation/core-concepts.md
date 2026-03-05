@@ -435,7 +435,7 @@ BaseItemAnimationComponent "{GUID}" {
 ```
 
 - `StartNode` must match the master Queue node name exactly — without it the graph does not evaluate even with `AlwaysActive 1` and correct AGR `DefaultRunNode`.
-- `AnimationControllerComponent` must also be present on the entity (can be empty).
+- Do NOT add `AnimationControllerComponent` alongside `BaseItemAnimationComponent` — use one or the other, not both.
 
 ---
 
