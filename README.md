@@ -95,6 +95,7 @@ Work without Workbench running — API search, mod scaffolding, code generation,
 | `component_search` | Search ScriptComponent descendants — filter by category (character, vehicle, weapon, damage, inventory, ai, ui, etc.) and event handlers |
 | `wiki_search` | Search 250+ tutorials and guides from the Enfusion engine docs and BI Community Wiki |
 | `wiki_read` | Read the full content of a wiki page by title — no truncation, includes code examples |
+| `wb_knowledge` | Search the bundled Arma Reforger modding knowledge base — distilled patterns covering scripting, audio, weapons, vehicles, AI, UI, game modes, animation, and more |
 | `game_browse` | Browse base game files — loose files and `.pak` archives transparently |
 | `game_read` | Read base game files — scripts, prefabs, configs from loose files or `.pak` |
 | `prefab_inspect` | Inspect a prefab's full inheritance chain — merges all components across ancestors, showing which level each value comes from. Solves the problem of `.et` files only showing overrides. |
