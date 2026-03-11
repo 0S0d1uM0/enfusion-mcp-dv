@@ -1,5 +1,6 @@
 import { loadIndex } from "./loader.js";
 import type { ClassInfo, MethodInfo, EnumInfo, PropertyInfo, WikiPage, GroupInfo } from "./types.js";
+import { levenshtein, trigramSimilarity } from "../utils/fuzzy.js";
 
 export interface MethodSearchResult {
   className: string;
@@ -265,6 +266,27 @@ export class SearchEngine {
       }
     }
 
+    // Fuzzy fallback: only activate when strict matching returns < 3 results
+    if (results.length < 3) {
+      for (const cls of this.classByName.values()) {
+        if (source !== "all" && cls.source !== source) continue;
+        if (results.some((r) => r.cls.name === cls.name)) continue;
+
+        const nameLower = cls.name.toLowerCase();
+        const dist = levenshtein(q, nameLower);
+        if (dist <= 1) {
+          results.push({ cls, score: 40 });
+        } else if (dist <= 2) {
+          results.push({ cls, score: 20 });
+        } else {
+          const sim = trigramSimilarity(q, nameLower);
+          if (sim > 0.3) {
+            results.push({ cls, score: 15 });
+          }
+        }
+      }
+    }
+
     results.sort((a, b) => b.score - a.score);
     return results.slice(0, limit).map((r) => r.cls);
   }
@@ -291,6 +313,29 @@ export class SearchEngine {
         for (const entry of entries) {
           if (source !== "all" && entry.classSource !== source) continue;
           results.push({ result: entry, score });
+        }
+      }
+    }
+
+    // Fuzzy fallback: only activate when strict matching returns < 3 results
+    if (results.length < 3) {
+      for (const [methodName, entries] of this.methodIndex) {
+        if (results.some((r) => r.result.method.name === methodName)) continue;
+        const dist = levenshtein(q, methodName);
+        let fuzzyScore = 0;
+        if (dist <= 1) {
+          fuzzyScore = 40;
+        } else if (dist <= 2) {
+          fuzzyScore = 20;
+        } else {
+          const sim = trigramSimilarity(q, methodName);
+          if (sim > 0.3) fuzzyScore = 15;
+        }
+        if (fuzzyScore > 0) {
+          for (const entry of entries) {
+            if (source !== "all" && entry.classSource !== source) continue;
+            results.push({ result: entry, score: fuzzyScore });
+          }
         }
       }
     }

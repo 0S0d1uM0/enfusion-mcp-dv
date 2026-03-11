@@ -388,4 +388,29 @@ describe("SearchEngine", () => {
       expect(inherited.enums).toEqual([]);
     });
   });
+
+  describe("fuzzy search", () => {
+    it("should find ScriptComponent with typo ScriptCompnent", () => {
+      const results = engine.searchClasses("ScriptCompnent");
+      expect(results.length).toBeGreaterThan(0);
+      const names = results.map((r) => r.name);
+      expect(names.some((n) => n.toLowerCase().includes("scriptcomponent"))).toBe(true);
+    });
+
+    it("should not return fuzzy results when exact results exist", () => {
+      const results = engine.searchClasses("GenericEntity");
+      expect(results.length).toBeGreaterThan(0);
+      expect(results[0].name).toBe("GenericEntity");
+    });
+
+    it("should cap fuzzy results at limit", () => {
+      const results = engine.searchClasses("xyz123nonexistent");
+      expect(results.length).toBeLessThanOrEqual(10);
+    });
+
+    it("should find methods with common typo", () => {
+      const results = engine.searchMethods("GetPositon");
+      expect(results.length).toBeGreaterThan(0);
+    });
+  });
 });
