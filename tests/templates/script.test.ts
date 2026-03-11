@@ -171,6 +171,33 @@ describe("generateScript", () => {
   });
 });
 
+describe("dynamic parent method resolution", () => {
+  it("should accept dynamicMethods option and use them for stubs", () => {
+    const code = generateScript({
+      className: "TAG_TestComponent",
+      scriptType: "component",
+      parentClass: "SCR_InventoryStorageManagerComponent",
+      dynamicMethods: [
+        "override void OnItemAdded(BaseInventoryStorageComponent storageOwner, IEntity item)",
+        "override void OnItemRemoved(BaseInventoryStorageComponent storageOwner, IEntity item)",
+      ],
+    });
+    expect(code).toContain("OnItemAdded");
+    expect(code).toContain("OnItemRemoved");
+    // Should NOT contain default component methods when dynamic methods are provided
+    expect(code).not.toContain("EOnInit");
+  });
+
+  it("should fall back to hardcoded methods when dynamicMethods is not provided", () => {
+    const code = generateScript({
+      className: "TAG_TestComponent",
+      scriptType: "component",
+    });
+    expect(code).toContain("EOnInit");
+    expect(code).toContain("OnPostInit");
+  });
+});
+
 describe("extractParamNames with default values", () => {
   it("should generate correct super call when params have defaults", () => {
     const code = generateScript({

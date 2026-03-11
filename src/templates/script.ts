@@ -16,6 +16,8 @@ export interface ScriptOptions {
   parentClass?: string;
   /** Method names to generate stubs for */
   methods?: string[];
+  /** Dynamically resolved methods from API index — overrides hardcoded defaults when no explicit methods given */
+  dynamicMethods?: string[];
   /** Description added as a comment at the top */
   description?: string;
 }
@@ -107,27 +109,30 @@ export function generateScript(opts: ScriptOptions): string {
     lines.push("");
   }
 
+  // Use dynamic methods as a fallback when no explicit methods given
+  const effectiveMethods = opts.methods ?? opts.dynamicMethods;
+
   switch (opts.scriptType) {
     case "modded":
-      lines.push(...generateModded(opts.className, parent, opts.methods));
+      lines.push(...generateModded(opts.className, parent, effectiveMethods));
       break;
     case "component":
-      lines.push(...generateComponent(opts.className, parent, opts.methods));
+      lines.push(...generateComponent(opts.className, parent, effectiveMethods));
       break;
     case "gamemode":
-      lines.push(...generateGamemode(opts.className, parent, opts.methods));
+      lines.push(...generateGamemode(opts.className, parent, effectiveMethods));
       break;
     case "action":
-      lines.push(...generateAction(opts.className, parent, opts.methods));
+      lines.push(...generateAction(opts.className, parent, effectiveMethods));
       break;
     case "entity":
-      lines.push(...generateEntity(opts.className, parent, opts.methods));
+      lines.push(...generateEntity(opts.className, parent, effectiveMethods));
       break;
     case "manager":
-      lines.push(...generateManager(opts.className, opts.methods));
+      lines.push(...generateManager(opts.className, effectiveMethods));
       break;
     case "basic":
-      lines.push(...generateBasic(opts.className, parent, opts.methods));
+      lines.push(...generateBasic(opts.className, parent, effectiveMethods));
       break;
   }
 
