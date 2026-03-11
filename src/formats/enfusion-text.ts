@@ -78,7 +78,15 @@ function tokenize(input: string): Token[] {
       let str = "";
       while (i < len && input[i] !== '"') {
         if (input[i] === "\\" && i + 1 < len) {
-          str += input[i + 1];
+          const esc = input[i + 1];
+          switch (esc) {
+            case "n": str += "\n"; break;
+            case "t": str += "\t"; break;
+            case "r": str += "\r"; break;
+            case "\\": str += "\\"; break;
+            case '"': str += '"'; break;
+            default: str += esc; break;
+          }
           i += 2;
         } else {
           str += input[i];
@@ -389,7 +397,12 @@ class Parser {
 
 /** Escape backslashes and double quotes in string values for serialization. */
 function escapeString(str: string): string {
-  return str.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  return str
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, "\\n")
+    .replace(/\t/g, "\\t")
+    .replace(/\r/g, "\\r");
 }
 
 function serializeNode(node: EnfusionNode, indent: number): string {

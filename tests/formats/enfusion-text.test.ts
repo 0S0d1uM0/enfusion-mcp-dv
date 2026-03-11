@@ -245,6 +245,43 @@ describe("round-trip", () => {
   });
 });
 
+describe("string escape handling", () => {
+  it("should parse \\n escape in string values", () => {
+    const input = `MyNode {\n  key "line1\\nline2"\n}`;
+    const node = parse(input);
+    expect(node.properties[0].value).toBe("line1\nline2");
+  });
+
+  it("should parse \\t escape in string values", () => {
+    const input = `MyNode {\n  key "col1\\tcol2"\n}`;
+    const node = parse(input);
+    expect(node.properties[0].value).toBe("col1\tcol2");
+  });
+
+  it("should parse \\\\ escape as literal backslash", () => {
+    const input = `MyNode {\n  key "c:\\\\path"\n}`;
+    const node = parse(input);
+    expect(node.properties[0].value).toBe("c:\\path");
+  });
+
+  it("should round-trip strings with newlines", () => {
+    const input = `MyNode {\n  key "line1\\nline2"\n}`;
+    const node = parse(input);
+    const output = serialize(node);
+    const reparsed = parse(output);
+    expect(reparsed.properties[0].value).toBe("line1\nline2");
+  });
+
+  it("should serialize newlines as \\n in output", () => {
+    const input = `MyNode {\n  key "has newline"\n}`;
+    const node = parse(input);
+    node.properties[0].value = "line1\nline2";
+    const output = serialize(node);
+    expect(output).toContain('\\n');
+    expect(output).not.toContain('\n"');
+  });
+});
+
 describe("createNode / setProperty / getProperty helpers", () => {
   it("creates node with defaults", () => {
     const node = createNode("Test");
