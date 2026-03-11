@@ -171,6 +171,30 @@ describe("generateScript", () => {
   });
 });
 
+describe("extractParamNames with default values", () => {
+  it("should generate correct super call when params have defaults", () => {
+    const code = generateScript({
+      className: "TAG_TestModded",
+      scriptType: "modded",
+      parentClass: "SCR_BaseGameMode",
+      methods: ["override void OnInit(IEntity owner = null)"],
+    });
+    expect(code).toContain("super.OnInit(owner)");
+    // super call should use param name, not default value
+    expect(code).not.toContain("super.OnInit(null)");
+  });
+
+  it("should handle multiple params with defaults", () => {
+    const code = generateScript({
+      className: "TAG_TestModded2",
+      scriptType: "modded",
+      parentClass: "SCR_BaseGameMode",
+      methods: ["override void OnDamage(float damage = 0, int type = -1, IEntity source = null)"],
+    });
+    expect(code).toContain("super.OnDamage(damage, type, source)");
+  });
+});
+
 describe("getScriptModuleFolder", () => {
   it("returns Scripts/Game for all standard types", () => {
     expect(getScriptModuleFolder("component")).toBe("Scripts/Game");

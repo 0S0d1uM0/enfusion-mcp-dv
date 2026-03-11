@@ -347,8 +347,10 @@ function extractParamNames(sig: string): string {
   return match[1]
     .split(",")
     .map((p) => {
-      // Each param is like "float damage" or "IEntity owner" — take the last word
-      const parts = p.trim().split(/\s+/);
+      // Strip default value: "IEntity owner = null" → "IEntity owner"
+      const withoutDefault = p.split("=")[0].trim();
+      // Take the last word as the param name
+      const parts = withoutDefault.split(/\s+/);
       return parts[parts.length - 1];
     })
     .join(", ");
