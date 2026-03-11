@@ -72,6 +72,13 @@ export function parsePakIndex(pakPath: string): PakIndex {
       const magic = hdr.readUInt32BE(0);
       const chunkLen = hdr.readUInt32BE(4);
 
+      // Bounds check: chunk must fit within the file
+      if (chunkLen > fileSize - pos - 8) {
+        throw new Error(
+          `PAK chunk 0x${magic.toString(16)} at offset ${pos} has size ${chunkLen} but only ${fileSize - pos - 8} bytes remain`
+        );
+      }
+
       if (magic === MAGIC_HEAD) {
         // Skip HEAD chunk entirely
         pos += 8 + chunkLen;
@@ -130,6 +137,12 @@ function parseEntry(buf: Buffer, state: { offset: number }): PakDirEntry | PakFi
 
   const nameLen = buf.readUInt8(state.offset);
   state.offset += 1;
+
+  if (state.offset + nameLen > buf.length) {
+    throw new Error(
+      `PAK entry name length ${nameLen} exceeds buffer at offset ${state.offset} (buffer size ${buf.length})`
+    );
+  }
 
   const name = buf.toString("utf8", state.offset, state.offset + nameLen);
   state.offset += nameLen;

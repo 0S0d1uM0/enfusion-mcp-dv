@@ -249,3 +249,24 @@ describe("parsePakIndex", () => {
     expect(() => parsePakIndex(pakPath)).toThrow();
   });
 });
+
+describe("PAK reader bounds checks", () => {
+  it("should reject chunk with size exceeding file", () => {
+    // Create a minimal PAK with a chunk whose size field exceeds the file
+    const buf = Buffer.alloc(20);
+    buf.writeUInt32BE(0x464f524d, 0); // FORM
+    buf.writeUInt32BE(8, 4);           // FORM size
+    buf.writeUInt32BE(0x50414331, 8);  // PAC1
+    // DATA chunk at offset 12 with absurd size
+    buf.writeUInt32BE(0x44415441, 12); // DATA
+    buf.writeUInt32BE(0xffff0000, 16); // chunk size exceeds file
+
+    const pakPath = join(tmpdir(), `test-oversize-${process.pid}.pak`);
+    writeFileSync(pakPath, buf);
+    try {
+      expect(() => parsePakIndex(pakPath)).toThrow();
+    } finally {
+      rmSync(pakPath, { force: true });
+    }
+  });
+});
