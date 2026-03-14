@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { WorkbenchClient } from "../workbench/client.js";
-import { formatConnectionStatus } from "../workbench/status.js";
+import { formatConnectionStatus, requireEditMode } from "../workbench/status.js";
 
 export function registerWbScriptEditor(server: McpServer, client: WorkbenchClient): void {
   server.registerTool(
@@ -31,6 +31,15 @@ export function registerWbScriptEditor(server: McpServer, client: WorkbenchClien
     },
     async ({ action, line, text, path }) => {
       try {
+        // Mutating actions require edit mode
+        const MUTATING_ACTIONS = ["setLine", "insertLine", "removeLine"];
+        if (MUTATING_ACTIONS.includes(action)) {
+          const modeErr = requireEditMode(client, `${action} in script editor`);
+          if (modeErr) {
+            return { content: [{ type: "text" as const, text: modeErr + formatConnectionStatus(client) }] };
+          }
+        }
+
         // Validate required params per action
         if (
           (action === "getLine" || action === "setLine" || action === "insertLine" || action === "removeLine") &&

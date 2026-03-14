@@ -30,6 +30,13 @@ export function registerWorkshopInfo(server: McpServer, config: Config): void {
     async ({ projectPath, modName }) => {
       try {
         const basePath = projectPath || config.projectPath;
+        if (!basePath) {
+          return {
+            content: [
+              { type: "text", text: "No project path configured. Set ENFUSION_PROJECT_PATH or provide projectPath parameter." },
+            ],
+          };
+        }
         let gprojPath: string | null = null;
 
         if (modName) {

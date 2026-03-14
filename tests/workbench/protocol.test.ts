@@ -156,12 +156,6 @@ describe("protocol", () => {
       expect(result.items).toEqual(["a"]);
     });
 
-    it("returns empty object for Ok with no payload", () => {
-      const buf = encodePascalString("Ok");
-      const result = decodeResponse(buf);
-      expect(result).toEqual({});
-    });
-
     it("throws on error status (e.g. Undefined API func)", () => {
       const buf = encodePascalString("Undefined API func");
       expect(() => decodeResponse(buf)).toThrow("Workbench error: Undefined API func");
@@ -176,6 +170,22 @@ describe("protocol", () => {
 
     it("throws on empty buffer", () => {
       expect(() => decodeResponse(Buffer.alloc(0))).toThrow("Buffer too short");
+    });
+  });
+
+  describe("decodeResponse edge cases", () => {
+    it("should throw when status is Ok but no payload follows", () => {
+      // Encode just "Ok" status with no payload
+      const buf = encodePascalString("Ok");
+      expect(() => decodeResponse(buf)).toThrow(/no payload/i);
+    });
+
+    it("should throw when status is Ok but payload is empty string", () => {
+      const buf = Buffer.concat([
+        encodePascalString("Ok"),
+        encodePascalString(""),
+      ]);
+      expect(() => decodeResponse(buf)).toThrow(/empty payload/i);
     });
   });
 });

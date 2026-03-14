@@ -473,7 +473,7 @@ export function registerAnimationGraphAuthor(server: McpServer, config: Config):
       inputSchema: {
         vehicleName: z.string().describe("Vehicle name (e.g. 'MyTruck'). Used in file names and GlobalTags."),
         vehicleType: z.enum(["wheeled", "tracked", "helicopter", "boat"]).default("wheeled"),
-        wheelCount: z.number().int().min(2).max(8).default(4).describe("Number of wheels (2/4/6/8)."),
+        wheelCount: z.number().int().min(2).max(8).refine(n => n % 2 === 0, "Must be even (2/4/6/8)").default(4).describe("Number of wheels (2/4/6/8). Must be even."),
         hasTurret: z.boolean().default(false).describe("Add turret variables and bone mask."),
         hasSuspensionIK: z.boolean().default(true).describe("Add suspension IK chains."),
         hasShockAbsorbers: z.boolean().default(false).describe("Add shock absorber IK chains."),

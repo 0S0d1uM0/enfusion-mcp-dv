@@ -86,7 +86,7 @@ function extractStringArray(body: string, propName: string): string[] {
   const inner = body.slice(openPos + 1, i - 1);
   // Extract quoted strings
   const items: string[] = [];
-  const itemRe = /"([^"\\n\\r]*)"/g;
+  const itemRe = /"([^"\n\r]*)"/g;
   let m: RegExpExecArray | null;
   while ((m = itemRe.exec(inner)) !== null) {
     items.push(m[1]);

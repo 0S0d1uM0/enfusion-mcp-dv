@@ -11,6 +11,7 @@ import type { Config } from "../config.js";
 import type { WorkbenchClient } from "../workbench/client.js";
 import { resolveGameDataPath, findLooseFile, resolveAddonDir } from "../utils/game-paths.js";
 import { validateProjectPath } from "../utils/safe-path.js";
+import { requireEditMode, formatConnectionStatus } from "../workbench/status.js";
 
 /**
  * wb_entity_duplicate — duplicate a scene entity into the mod folder.
@@ -62,6 +63,11 @@ export function registerWbEntityDuplicate(
       },
     },
     async ({ entityName, destPath, modName, replaceInScene }) => {
+      const modeErr = requireEditMode(client, "duplicate entity");
+      if (modeErr) {
+        return { content: [{ type: "text" as const, text: modeErr + formatConnectionStatus(client) }] };
+      }
+
       // Resolve addon directory
       const addonDir = resolveAddonDir(config.projectPath, modName);
       if (!addonDir) {
@@ -181,7 +187,7 @@ export function registerWbEntityDuplicate(
         };
       }
 
-      // Step 5: Get the entity's current position before deleting
+      // Step 5: Get the entity's current position before replacing
       let position = "0 0 0";
       try {
         const posResp = await client.call<{ status: string; value?: string }>(
@@ -195,28 +201,7 @@ export function registerWbEntityDuplicate(
         // Non-fatal — place at origin if position can't be read
       }
 
-      // Step 6: Delete the original entity
-      try {
-        await client.call("EMCP_WB_DeleteEntity", { name: entityName });
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        return {
-          content: [
-            {
-              type: "text",
-              text: [
-                `**Prefab saved but original entity could not be deleted**`,
-                `- Saved to: ${absDestPath}`,
-                `- GUID: ${newGuid ?? "(read .meta manually)"}`,
-                `- Delete error: ${msg}`,
-                `- Place manually using: ${prefabRef}`,
-              ].join("\n"),
-            },
-          ],
-        };
-      }
-
-      // Step 7: Place the new duplicate
+      // Step 6: Place the new duplicate FIRST (safe order: create before delete)
       const newName = entityName + "_copy";
       try {
         await client.call("EMCP_WB_CreateEntity", {
@@ -229,14 +214,37 @@ export function registerWbEntityDuplicate(
         return {
           content: [
             {
-              type: "text",
+              type: "text" as const,
               text: [
-                `**Prefab saved, original deleted, but placement failed**`,
+                `**Prefab saved but placement failed**`,
                 `- Saved to: ${absDestPath}`,
                 `- GUID: ${newGuid ?? "(read .meta manually)"}`,
                 `- Place error: ${msg}`,
+                `- Original entity "${entityName}" was NOT deleted.`,
                 `- Place manually using: ${prefabRef}`,
-              ].join("\n"),
+              ].join("\n") + formatConnectionStatus(client),
+            },
+          ],
+        };
+      }
+
+      // Step 7: Delete the original entity (only after new one is placed)
+      try {
+        await client.call("EMCP_WB_DeleteEntity", { name: entityName });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: [
+                `**Prefab duplicated but original entity could not be deleted**`,
+                `- Saved to: ${absDestPath}`,
+                `- GUID: ${newGuid ?? "(read .meta manually)"}`,
+                `- New entity placed as: ${newName}`,
+                `- Delete error: ${msg}`,
+                `- Delete "${entityName}" manually in Workbench.`,
+              ].join("\n") + formatConnectionStatus(client),
             },
           ],
         };
@@ -245,10 +253,10 @@ export function registerWbEntityDuplicate(
       return {
         content: [
           {
-            type: "text",
+            type: "text" as const,
             text: [
               `**Entity duplicated successfully**`,
-              `- Original: ${entityName} (${ancestorResp.ancestorPath}) → deleted`,
+              `- Original: ${entityName} (${ancestorResp.ancestorPath}) -> deleted`,
               `- Copied from: ${sourceFile}`,
               `- New prefab: ${absDestPath}`,
               `- GUID: ${newGuid ?? "(read .meta manually)"}`,
@@ -256,7 +264,7 @@ export function registerWbEntityDuplicate(
               `- Reference: ${prefabRef}`,
               ``,
               `The entity is now editable — it references your mod's prefab, not the base game original.`,
-            ].join("\n"),
+            ].join("\n") + formatConnectionStatus(client),
           },
         ],
       };

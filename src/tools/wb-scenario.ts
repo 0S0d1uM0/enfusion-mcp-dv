@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { WorkbenchClient } from "../workbench/client.js";
+import { requireEditMode, formatConnectionStatus } from "../workbench/status.js";
 
 const SF = "Prefabs/Systems/ScenarioFramework/Components";
 
@@ -86,6 +87,11 @@ export function registerScenarioTools(server: McpServer, client: WorkbenchClient
       },
     },
     async ({ taskType, taskName, description, position, targetPrefab, aiGroupPrefab, triggerRadius, faction }) => {
+      const modeErr = requireEditMode(client, "create scenario objective");
+      if (modeErr) {
+        return { content: [{ type: "text" as const, text: modeErr + formatConnectionStatus(client) }] };
+      }
+
       const p = PREFABS[taskType];
       const names = {
         area:      `${taskName}_Area`,
@@ -218,7 +224,7 @@ export function registerScenarioTools(server: McpServer, client: WorkbenchClient
         );
 
         return {
-          content: [{ type: "text" as const, text: lines.filter(l => l !== "").join("\n") }],
+          content: [{ type: "text" as const, text: lines.filter(l => l !== "").join("\n") + formatConnectionStatus(client) }],
         };
 
       } catch (e) {
@@ -234,7 +240,7 @@ export function registerScenarioTools(server: McpServer, client: WorkbenchClient
               cleaned.length > 0
                 ? `Cleaned up ${cleaned.length} entities: ${cleaned.join(", ")}`
                 : "No entities needed cleanup.",
-            ].join("\n"),
+            ].join("\n") + formatConnectionStatus(client),
           }],
         };
       }

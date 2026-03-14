@@ -20,6 +20,8 @@ import type { Config } from "../config.js";
 
 const DEFAULT_CLIENT_ID = "EnfusionMCP";
 const DEFAULT_TIMEOUT_MS = 10_000;
+/** Maximum response size (10 MB) to prevent memory exhaustion from malformed/unexpected data. */
+const MAX_RESPONSE_SIZE = 10 * 1024 * 1024;
 const WORKBENCH_EXE = "ArmaReforgerWorkbenchSteamDiag.exe";
 const WORKBENCH_SUBDIR = "Workbench";
 const HANDLER_FOLDER = "EnfusionMCP";
@@ -57,7 +59,6 @@ export class WorkbenchError extends Error {
 }
 
 export class WorkbenchClient {
-  private launching = false;
   private launchPromise: Promise<void> | null = null;
   private _state: WorkbenchState = { connected: false, mode: "unknown", lastUpdated: 0 };
 
@@ -149,13 +150,11 @@ export class WorkbenchClient {
       return this.launchPromise;
     }
 
-    this.launching = true;
     this.launchPromise = this.launchWorkbench(gprojPath);
 
     try {
       await this.launchPromise;
     } finally {
-      this.launching = false;
       this.launchPromise = null;
     }
   }
@@ -420,8 +419,17 @@ export class WorkbenchClient {
     mkdirSync(targetScriptsDir, { recursive: true });
 
     const files = readdirSync(bundledDir).filter((f) => f.endsWith(".c"));
-    for (const file of files) {
-      copyFileSync(join(bundledDir, file), join(targetScriptsDir, file));
+    try {
+      for (const file of files) {
+        copyFileSync(join(bundledDir, file), join(targetScriptsDir, file));
+      }
+    } catch (e) {
+      // Partial installation — clean up to avoid broken state on next attempt
+      logger.error(`Failed to install handler scripts, rolling back: ${e}`);
+      try {
+        rmSync(targetScriptsDir, { recursive: true, force: true });
+      } catch { /* best-effort cleanup */ }
+      throw e;
     }
 
     logger.info(`Installed ${files.length} handler scripts.`);
@@ -440,6 +448,7 @@ export class WorkbenchClient {
 
     return new Promise<T>((resolve, reject) => {
       const chunks: Buffer[] = [];
+      let totalBytes = 0;
       let settled = false;
 
       const socket = new Socket();
@@ -485,6 +494,21 @@ export class WorkbenchClient {
       });
 
       socket.on("data", (chunk) => {
+        totalBytes += chunk.length;
+        if (totalBytes > MAX_RESPONSE_SIZE) {
+          if (!settled) {
+            settled = true;
+            cleanup();
+            socket.destroy();
+            reject(
+              new WorkbenchError(
+                `Response for "${apiFunc}" exceeded ${MAX_RESPONSE_SIZE} bytes — possible malformed data`,
+                "PROTOCOL_ERROR"
+              )
+            );
+          }
+          return;
+        }
         chunks.push(chunk);
       });
 
@@ -495,7 +519,12 @@ export class WorkbenchClient {
 
         const responseBuf = Buffer.concat(chunks);
         if (responseBuf.length === 0) {
-          resolve({} as T);
+          reject(
+            new WorkbenchError(
+              `Empty response from Workbench for "${apiFunc}" — connection closed without data`,
+              "PROTOCOL_ERROR"
+            )
+          );
           return;
         }
 
@@ -517,14 +546,29 @@ export class WorkbenchClient {
 
       socket.on("close", (hadError) => {
         if (settled) return;
+        // close fired without end — connection dropped unexpectedly
         settled = true;
         cleanup();
 
-        if (hadError) return;
+        if (hadError) {
+          reject(
+            new WorkbenchError(
+              `Connection to Workbench closed with error for "${apiFunc}"`,
+              "PROTOCOL_ERROR"
+            )
+          );
+          return;
+        }
 
+        // No end event + no error = unusual. Try to decode what we have.
         const responseBuf = Buffer.concat(chunks);
         if (responseBuf.length === 0) {
-          resolve({} as T);
+          reject(
+            new WorkbenchError(
+              `Connection closed without response for "${apiFunc}"`,
+              "PROTOCOL_ERROR"
+            )
+          );
           return;
         }
 
@@ -547,8 +591,7 @@ export class WorkbenchClient {
         logger.debug(
           `Connected to Workbench at ${this.host}:${this.port}, calling "${apiFunc}"`
         );
-        socket.write(requestBuf);
-        socket.end();
+        socket.end(requestBuf);
       });
     });
   }

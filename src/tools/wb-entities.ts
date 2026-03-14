@@ -279,9 +279,13 @@ export function registerWbEntityTools(server: McpServer, client: WorkbenchClient
       },
     },
     async ({ name, action, value, propertyPath, propertyKey, memberIndex }) => {
-      const modeErr = requireEditMode(client, "modify entity");
-      if (modeErr) {
-        return { content: [{ type: "text" as const, text: modeErr + formatConnectionStatus(client) }] };
+      // Only require edit mode for mutating actions, not read-only ones
+      const READ_ONLY_ACTIONS = ["getProperty", "listProperties", "listArrayItems"];
+      if (!READ_ONLY_ACTIONS.includes(action)) {
+        const modeErr = requireEditMode(client, "modify entity");
+        if (modeErr) {
+          return { content: [{ type: "text" as const, text: modeErr + formatConnectionStatus(client) }] };
+        }
       }
       try {
         // Validate value is provided for actions that require it
@@ -298,7 +302,10 @@ export function registerWbEntityTools(server: McpServer, client: WorkbenchClient
           };
         }
 
-        const params: Record<string, unknown> = { name, action, value: value ?? "" };
+        const params: Record<string, unknown> = { name, action };
+        if (!READ_ONLY_ACTIONS.includes(action)) {
+          params.value = value ?? "";
+        }
         if (propertyPath) params.propertyPath = propertyPath;
         if (propertyKey) params.propertyKey = propertyKey;
         // Always send memberIndex for array actions (-1 = append for addArrayItem)

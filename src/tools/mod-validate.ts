@@ -5,6 +5,7 @@ import { resolve, join, extname, relative } from "node:path";
 import type { Config } from "../config.js";
 import type { SearchEngine } from "../index/search-engine.js";
 import { parse, getProperty } from "../formats/enfusion-text.js";
+import { validateProjectPath } from "../utils/safe-path.js";
 
 interface ValidationIssue {
   level: "error" | "warning" | "info";
@@ -170,7 +171,7 @@ function checkPrefabs(projectPath: string): ValidationIssue[] {
   return issues;
 }
 
-function checkConfigs(projectPath: string): ValidationIssue[] {
+function checkConfigs(projectPath: string, searchEngine?: SearchEngine): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const allConfigs = findFiles(projectPath, ".conf");
 
@@ -178,7 +179,32 @@ function checkConfigs(projectPath: string): ValidationIssue[] {
     const rel = relative(projectPath, configPath).replace(/\\/g, "/");
     try {
       const content = readFileSync(configPath, "utf-8");
-      parse(content);
+      const root = parse(content);
+
+      // Check root node type against API index (only if searchEngine available)
+      if (searchEngine && root.type && !searchEngine.hasClass(root.type)) {
+        issues.push({
+          level: "warning",
+          message: `${rel}: Root class "${root.type}" not found in API index — may be from another mod or misspelled.`,
+        });
+      }
+
+      // Walk children and check their type names
+      if (searchEngine) {
+        const walkNodes = (node: ReturnType<typeof parse>) => {
+          for (const child of node.children || []) {
+            if (child.type && /^[A-Z]/.test(child.type) && !searchEngine.hasClass(child.type)) {
+              issues.push({
+                level: "warning",
+                message: `${rel}: Class "${child.type}" not found in API index.`,
+              });
+            }
+            walkNodes(child);
+          }
+        };
+        walkNodes(root);
+      }
+
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       issues.push({
@@ -291,7 +317,24 @@ export function registerModValidate(
       },
     },
     async ({ projectPath, checks }) => {
-      const basePath = projectPath || config.projectPath;
+      let basePath: string;
+      if (projectPath) {
+        // Validate user-supplied path is within the configured project directory
+        try {
+          basePath = validateProjectPath(config.projectPath, projectPath);
+        } catch {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Invalid project path: "${projectPath}". Path must be within the configured project directory (${config.projectPath}).`,
+              },
+            ],
+          };
+        }
+      } else {
+        basePath = config.projectPath;
+      }
 
       if (!basePath) {
         return {
@@ -320,7 +363,7 @@ export function registerModValidate(
         gproj: () => checkGproj(basePath),
         scripts: () => checkScripts(basePath),
         prefabs: () => checkPrefabs(basePath),
-        configs: () => checkConfigs(basePath),
+        configs: () => checkConfigs(basePath, searchEngine),
         references: () => checkReferences(basePath, searchEngine),
         naming: () => checkNaming(basePath),
       };

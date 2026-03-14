@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
+import { existsSync, readdirSync } from "node:fs";
 import type { WorkbenchClient } from "../workbench/client.js";
 import { formatConnectionStatus } from "../workbench/status.js";
 
@@ -19,14 +20,6 @@ export function registerWbLaunch(
         "call this directly. IMPORTANT: When done working with Workbench, call wb_cleanup to remove the " +
         "handler scripts from the mod before the user publishes.",
       inputSchema: {
-        timeoutSeconds: z
-          .number()
-          .min(10)
-          .max(300)
-          .default(60)
-          .describe(
-            "Maximum seconds to wait for Workbench to start and NET API to respond (default 60)."
-          ),
         gprojPath: z
           .string()
           .optional()
@@ -97,6 +90,25 @@ export function registerWbLaunch(
       },
     },
     async ({ modDir }) => {
+      // Validate modDir looks like a real mod directory (has a .gproj)
+      if (!existsSync(modDir)) {
+        return {
+          content: [{
+            type: "text" as const,
+            text: `**Error:** Directory not found: ${modDir}${formatConnectionStatus(client)}`,
+          }],
+        };
+      }
+      const hasGproj = readdirSync(modDir).some(f => f.endsWith(".gproj"));
+      if (!hasGproj) {
+        return {
+          content: [{
+            type: "text" as const,
+            text: `**Error:** "${modDir}" does not appear to be a mod directory (no .gproj file found). Provide the mod root directory containing the .gproj file.${formatConnectionStatus(client)}`,
+          }],
+        };
+      }
+
       const removed = client.cleanupHandlerScripts(modDir);
       if (removed) {
         return {

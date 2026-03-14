@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { WorkbenchClient } from "../workbench/client.js";
-import { formatConnectionStatus } from "../workbench/status.js";
+import { formatConnectionStatus, requireEditMode } from "../workbench/status.js";
 
 export function registerWbResources(server: McpServer, client: WorkbenchClient): void {
   server.registerTool(
@@ -26,6 +26,14 @@ export function registerWbResources(server: McpServer, client: WorkbenchClient):
     },
     async ({ action, path, buildRuntime }) => {
       try {
+        // Mutating actions require edit mode
+        if (action === "register" || action === "rebuild") {
+          const modeErr = requireEditMode(client, `${action} resource`);
+          if (modeErr) {
+            return { content: [{ type: "text" as const, text: modeErr + formatConnectionStatus(client) }] };
+          }
+        }
+
         if (action === "getInfo") {
           // Use built-in GetResourceInfo handler
           const result = await client.call<Record<string, unknown>>("GetResourceInfo", {

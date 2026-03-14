@@ -13,6 +13,8 @@
 
 const PROTOCOL_VERSION = 1;
 const CONTENT_TYPE = "JsonRPC";
+/** Maximum allowed Pascal string length (16 MB) to prevent memory exhaustion from malformed responses. */
+const MAX_STRING_LENGTH = 16 * 1024 * 1024;
 
 /** Encode a 32-bit signed integer as 4-byte little-endian Buffer. */
 export function encodeInt32LE(value: number): Buffer {
@@ -49,6 +51,9 @@ export function decodePascalString(
   const { value: length } = decodeInt32LE(buf, offset);
   if (length < 0) {
     throw new Error(`Invalid string length: ${length}`);
+  }
+  if (length > MAX_STRING_LENGTH) {
+    throw new Error(`String length ${length} exceeds maximum allowed (${MAX_STRING_LENGTH})`);
   }
   const strStart = offset + 4;
   if (buf.length < strStart + length) {
@@ -113,8 +118,8 @@ export function decodeResponse<T = Record<string, unknown>>(buf: Buffer): T {
         );
       }
     }
+    throw new Error("Workbench error: Ok status with empty payload");
   }
 
-  // "Ok" with no/empty payload — return empty object
-  return {} as T;
+  throw new Error("Workbench error: Ok status with no payload — possible truncated response");
 }

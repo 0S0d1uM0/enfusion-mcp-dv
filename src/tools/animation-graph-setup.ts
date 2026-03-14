@@ -688,7 +688,7 @@ export function registerAnimationGraphSetup(server: McpServer, config: Config): 
       inputSchema: {
         vehicleName: z.string().describe("Vehicle name (e.g. 'MyTruck')."),
         vehicleType: z.enum(["wheeled", "tracked", "helicopter", "boat"]).default("wheeled"),
-        wheelCount: z.number().int().min(2).max(8).default(4),
+        wheelCount: z.number().int().min(2).max(8).refine(n => n % 2 === 0, "Must be even (2/4/6/8)").default(4),
         hasTurret: z.boolean().default(false),
         hasSuspensionIK: z.boolean().default(true),
         hasShockAbsorbers: z.boolean().default(false),
