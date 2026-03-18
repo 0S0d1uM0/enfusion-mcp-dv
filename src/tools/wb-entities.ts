@@ -112,6 +112,7 @@ export function registerWbEntityTools(server: McpServer, client: WorkbenchClient
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text" as const, text: `Error creating entity: ${msg}${formatConnectionStatus(client)}` }],
+        isError: true,
         };
       }
     }
@@ -146,6 +147,7 @@ export function registerWbEntityTools(server: McpServer, client: WorkbenchClient
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text" as const, text: `Error deleting entity "${name}": ${msg}${formatConnectionStatus(client)}` }],
+        isError: true,
         };
       }
     }
@@ -186,6 +188,7 @@ export function registerWbEntityTools(server: McpServer, client: WorkbenchClient
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text" as const, text: `Error listing entities: ${msg}${formatConnectionStatus(client)}` }],
+        isError: true,
         };
       }
     }
@@ -222,6 +225,7 @@ export function registerWbEntityTools(server: McpServer, client: WorkbenchClient
                 text: "Error: Provide either `name` or `index` to identify the entity.",
               },
             ],
+            isError: true,
           };
         }
 
@@ -240,6 +244,7 @@ export function registerWbEntityTools(server: McpServer, client: WorkbenchClient
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text" as const, text: `Error inspecting entity: ${msg}${formatConnectionStatus(client)}` }],
+        isError: true,
         };
       }
     }
@@ -294,11 +299,13 @@ export function registerWbEntityTools(server: McpServer, client: WorkbenchClient
         if (actionsRequiringValue.includes(action) && (!value || value.trim() === "")) {
           return {
             content: [{ type: "text" as const, text: `Error: "value" parameter is required for the "${action}" action.` }],
+          isError: true,
           };
         }
         if (action === "setProperty" && value === undefined) {
           return {
             content: [{ type: "text" as const, text: `Error: "value" parameter is required for the "${action}" action.` }],
+          isError: true,
           };
         }
 
@@ -347,6 +354,7 @@ export function registerWbEntityTools(server: McpServer, client: WorkbenchClient
               text: `Error modifying entity "${name}": ${msg}${formatConnectionStatus(client)}`,
             },
           ],
+          isError: true,
         };
       }
     }
@@ -378,6 +386,7 @@ export function registerWbEntityTools(server: McpServer, client: WorkbenchClient
                 text: `Error: \`name\` is required for the "${action}" action.`,
               },
             ],
+            isError: true,
           };
         }
 
@@ -391,6 +400,7 @@ export function registerWbEntityTools(server: McpServer, client: WorkbenchClient
           if (selected.length === 0) {
             return {
               content: [{ type: "text" as const, text: `**No entities selected.**${formatConnectionStatus(client)}` }],
+            isError: true,
             };
           }
           const lines = ["**Selected Entities**\n"];
@@ -421,6 +431,7 @@ export function registerWbEntityTools(server: McpServer, client: WorkbenchClient
           content: [
             { type: "text" as const, text: `Error with selection (${action}): ${msg}${formatConnectionStatus(client)}` },
           ],
+          isError: true,
         };
       }
     }

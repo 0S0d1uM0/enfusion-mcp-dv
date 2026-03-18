@@ -74,6 +74,7 @@ export function registerGameDuplicate(
         if (!gameDataPath) {
           return {
             content: [{ type: "text", text: `Base game not found at ${config.gamePath}.` }],
+          isError: true,
           };
         }
         sourceFile = findLooseFile(gameDataPath, bareSourcePath);
@@ -91,6 +92,7 @@ export function registerGameDuplicate(
                 `Use asset_search to verify the path exists.`,
             },
           ],
+          isError: true,
         };
       }
 
@@ -108,6 +110,7 @@ export function registerGameDuplicate(
                 `. Provide modName matching the addon folder name.`,
             },
           ],
+          isError: true,
         };
       }
 
@@ -118,12 +121,14 @@ export function registerGameDuplicate(
       } catch {
         return {
           content: [{ type: "text", text: `Invalid destination path: ${destPath}` }],
+        isError: true,
         };
       }
 
       if (existsSync(absDestPath)) {
         return {
           content: [{ type: "text", text: `Destination already exists: ${absDestPath}` }],
+        isError: true,
         };
       }
 
@@ -139,6 +144,7 @@ export function registerGameDuplicate(
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text", text: `Failed to copy file: ${msg}` }],
+        isError: true,
         };
       }
 
@@ -189,6 +195,7 @@ export function registerGameDuplicate(
                 ].join("\n"),
               },
             ],
+            isError: true,
           };
         }
       }

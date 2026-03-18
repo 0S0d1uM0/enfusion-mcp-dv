@@ -80,6 +80,7 @@ export function registerWbValidate(server: McpServer, client: WorkbenchClient): 
               text: `Error validating ${action} "${path}": ${msg}${formatConnectionStatus(client)}`,
             },
           ],
+          isError: true,
         };
       }
     }

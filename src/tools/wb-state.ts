@@ -47,6 +47,7 @@ export function registerWbState(server: McpServer, client: WorkbenchClient): voi
               text: `Error getting Workbench state: ${msg}${formatConnectionStatus(client)}`,
             },
           ],
+          isError: true,
         };
       }
     }

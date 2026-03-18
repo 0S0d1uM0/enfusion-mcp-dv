@@ -33,6 +33,7 @@ export function registerProjectRead(server: McpServer, config: Config): void {
               text: "No project path configured. Set ENFUSION_PROJECT_PATH environment variable or provide projectPath parameter.",
             },
           ],
+          isError: true,
         };
       }
 
@@ -42,6 +43,7 @@ export function registerProjectRead(server: McpServer, config: Config): void {
         if (!existsSync(fullPath)) {
           return {
             content: [{ type: "text", text: `File not found: ${filePath}` }],
+          isError: true,
           };
         }
 
@@ -53,6 +55,7 @@ export function registerProjectRead(server: McpServer, config: Config): void {
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text", text: `Error reading file: ${msg}` }],
+        isError: true,
         };
       }
     }

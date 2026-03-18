@@ -114,6 +114,7 @@ export function registerWbLayers(server: McpServer, client: WorkbenchClient): vo
           content: [
             { type: "text" as const, text: `Error managing layers (${action}): ${msg}${formatConnectionStatus(client)}` },
           ],
+          isError: true,
         };
       }
     }

@@ -132,6 +132,7 @@ export function registerScriptCreate(server: McpServer, config: Config, searchEn
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text", text: `Error creating script: ${msg}` }],
+        isError: true,
         };
       }
     }

@@ -113,6 +113,7 @@ export function registerModBuild(server: McpServer, config: Config): void {
               text: `Workbench not found at: ${config.workbenchPath}\n\n${WORKBENCH_DIAG_EXE} is required for building.\n\nInstall Arma Reforger Tools from Steam, or set ENFUSION_WORKBENCH_PATH to the correct path.\n\nNote: You need the Diag version (opt into "Profiling Build" beta in Steam).`,
             },
           ],
+          isError: true,
         };
       }
 
@@ -194,6 +195,7 @@ export function registerModBuild(server: McpServer, config: Config): void {
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text", text: `Error running build: ${msg}` }],
+        isError: true,
         };
       }
     }

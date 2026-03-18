@@ -344,6 +344,7 @@ export function registerModValidate(
               text: "No project path configured. Set ENFUSION_PROJECT_PATH environment variable or provide projectPath parameter.",
             },
           ],
+          isError: true,
         };
       }
 
@@ -352,6 +353,7 @@ export function registerModValidate(
           content: [
             { type: "text", text: `Project directory not found: ${basePath}` },
           ],
+          isError: true,
         };
       }
 

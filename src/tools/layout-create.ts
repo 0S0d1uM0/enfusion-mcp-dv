@@ -144,6 +144,7 @@ export function registerLayoutCreate(server: McpServer, config: Config): void {
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text", text: `Error creating layout: ${msg}` }],
+        isError: true,
         };
       }
     }

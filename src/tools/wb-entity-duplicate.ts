@@ -82,6 +82,7 @@ export function registerWbEntityDuplicate(
                 `. Provide modName matching the addon folder name.`,
             },
           ],
+          isError: true,
         };
       }
 
@@ -90,6 +91,7 @@ export function registerWbEntityDuplicate(
       if (existsSync(absDestPath)) {
         return {
           content: [{ type: "text", text: `Destination already exists: ${absDestPath}` }],
+        isError: true,
         };
       }
 
@@ -118,6 +120,7 @@ export function registerWbEntityDuplicate(
       if (!gameDataPath) {
         return {
           content: [{ type: "text", text: `Base game not found at ${config.gamePath}.` }],
+        isError: true,
         };
       }
 
@@ -130,6 +133,7 @@ export function registerWbEntityDuplicate(
               text: `Source file not found in game data: ${bareAncestorPath}\nSearched under: ${gameDataPath}`,
             },
           ],
+          isError: true,
         };
       }
 
@@ -141,6 +145,7 @@ export function registerWbEntityDuplicate(
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text", text: `Failed to copy file: ${msg}` }],
+        isError: true,
         };
       }
 
@@ -161,6 +166,7 @@ export function registerWbEntityDuplicate(
                   `File at: ${absDestPath}\nRegister manually in Workbench Resource Browser.`,
               },
             ],
+            isError: true,
           };
         }
       }
@@ -225,6 +231,7 @@ export function registerWbEntityDuplicate(
               ].join("\n") + formatConnectionStatus(client),
             },
           ],
+          isError: true,
         };
       }
 

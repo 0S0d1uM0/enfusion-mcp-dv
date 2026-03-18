@@ -40,6 +40,7 @@ export function registerWbComponent(server: McpServer, client: WorkbenchClient):
                 text: `Error: \`componentClass\` is required for the "${action}" action.`,
               },
             ],
+            isError: true,
           };
         }
 
@@ -90,6 +91,7 @@ export function registerWbComponent(server: McpServer, client: WorkbenchClient):
               text: `Error managing component on "${entityName}": ${msg}${formatConnectionStatus(client)}`,
             },
           ],
+          isError: true,
         };
       }
     }

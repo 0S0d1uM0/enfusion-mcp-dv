@@ -67,6 +67,7 @@ export function registerWbExecuteAction(server: McpServer, client: WorkbenchClie
               text: `Error executing action "${menuPath}": ${msg}${formatConnectionStatus(client)}`,
             },
           ],
+          isError: true,
         };
       }
     }

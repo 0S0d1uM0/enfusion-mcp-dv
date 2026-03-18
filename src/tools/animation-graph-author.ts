@@ -488,7 +488,7 @@ export function registerAnimationGraphAuthor(server: McpServer, config: Config):
     async (opts) => {
       const basePath = opts.projectPath || config.projectPath;
       if (!basePath) {
-        return { content: [{ type: "text", text: "No project path configured." }] };
+        return { content: [{ type: "text", text: "No project path configured." }], isError: true };
       }
 
       const cfg: VehicleConfig = {
@@ -535,7 +535,7 @@ export function registerAnimationGraphAuthor(server: McpServer, config: Config):
         };
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
-        return { content: [{ type: "text", text: `Error generating animation graph files: ${msg}` }] };
+        return { content: [{ type: "text", text: `Error generating animation graph files: ${msg}` }], isError: true };
       }
     }
   );

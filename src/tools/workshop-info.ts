@@ -35,6 +35,7 @@ export function registerWorkshopInfo(server: McpServer, config: Config): void {
             content: [
               { type: "text", text: "No project path configured. Set ENFUSION_PROJECT_PATH or provide projectPath parameter." },
             ],
+            isError: true,
           };
         }
         let gprojPath: string | null = null;
@@ -120,6 +121,7 @@ export function registerWorkshopInfo(server: McpServer, config: Config): void {
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text", text: `Error reading workshop info: ${msg}` }],
+        isError: true,
         };
       }
     }

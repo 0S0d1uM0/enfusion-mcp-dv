@@ -48,6 +48,7 @@ export function registerWbPrefabs(server: McpServer, client: WorkbenchClient): v
                   text: "Error: Provide `templatePath` (prefab resource path) for getGuid.",
                 },
               ],
+              isError: true,
             };
           }
 
@@ -62,6 +63,7 @@ export function registerWbPrefabs(server: McpServer, client: WorkbenchClient): v
                 text: `**Prefab GUID**\n\n- **Path:** ${templatePath || searchPath}\n- **GUID:** ${result.guid || result.GUID || "(not found)"}${formatConnectionStatus(client)}`,
               },
             ],
+            isError: true,
           };
         }
 
@@ -74,6 +76,7 @@ export function registerWbPrefabs(server: McpServer, client: WorkbenchClient): v
                   text: "Error: Provide `searchPath` for the locate action.",
                 },
               ],
+              isError: true,
             };
           }
 
@@ -107,7 +110,7 @@ export function registerWbPrefabs(server: McpServer, client: WorkbenchClient): v
 
         if (action === "getAncestor") {
           if (!entityName) {
-            return { content: [{ type: "text" as const, text: "Error: `entityName` is required for getAncestor." }] };
+            return { content: [{ type: "text" as const, text: "Error: `entityName` is required for getAncestor." }], isError: true };
           }
           const result = await client.call<{ status: string; ancestorPath?: string; message?: string }>(
             "EMCP_WB_Prefabs", { action: "getAncestor", entityName }
@@ -117,6 +120,7 @@ export function registerWbPrefabs(server: McpServer, client: WorkbenchClient): v
               type: "text" as const,
               text: `**Ancestor Prefab**\n\n- **Entity:** ${entityName}\n- **Ancestor:** ${result.ancestorPath || "(none)"}`,
             }],
+          isError: true,
           };
         }
 
@@ -129,6 +133,7 @@ export function registerWbPrefabs(server: McpServer, client: WorkbenchClient): v
                 text: `Error: \`entityName\` is required for the "${action}" action.`,
               },
             ],
+            isError: true,
           };
         }
 
@@ -166,6 +171,7 @@ export function registerWbPrefabs(server: McpServer, client: WorkbenchClient): v
               text: `Error with prefab operation (${action}): ${msg}${formatConnectionStatus(client)}`,
             },
           ],
+          isError: true,
         };
       }
     }

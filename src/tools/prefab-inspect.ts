@@ -276,6 +276,7 @@ export function registerPrefabInspect(server: McpServer, config: Config): void {
               text: `Could not read prefab: ${inputPath}\n` +
                 (warnings.length > 0 ? warnings.join("\n") : "File not found."),
             }],
+          isError: true,
           };
         }
 
@@ -287,7 +288,7 @@ export function registerPrefabInspect(server: McpServer, config: Config): void {
         };
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
-        return { content: [{ type: "text", text: `Error: ${msg}` }] };
+        return { content: [{ type: "text", text: `Error: ${msg}` }], isError: true };
       }
     }
   );

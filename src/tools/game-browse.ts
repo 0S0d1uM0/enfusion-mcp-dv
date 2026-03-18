@@ -39,6 +39,7 @@ export function registerGameBrowse(server: McpServer, config: Config): void {
               text: `Base game not found at ${config.gamePath}. Set ENFUSION_GAME_PATH or ensure Arma Reforger is installed.`,
             },
           ],
+          isError: true,
         };
       }
 
@@ -114,6 +115,7 @@ export function registerGameBrowse(server: McpServer, config: Config): void {
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text", text: `Error browsing game files: ${msg}` }],
+        isError: true,
         };
       }
     }

@@ -45,6 +45,7 @@ export function registerWbEditorTools(server: McpServer, client: WorkbenchClient
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text" as const, text: `Error starting play mode: ${msg}${formatConnectionStatus(client)}` }],
+        isError: true,
         };
       }
     }
@@ -80,6 +81,7 @@ export function registerWbEditorTools(server: McpServer, client: WorkbenchClient
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text" as const, text: `Error stopping play mode: ${msg}${formatConnectionStatus(client)}` }],
+        isError: true,
         };
       }
     }
@@ -139,6 +141,7 @@ export function registerWbEditorTools(server: McpServer, client: WorkbenchClient
         }
         return {
           content: [{ type: "text" as const, text: `Error saving: ${msg}${formatConnectionStatus(client)}` }],
+        isError: true,
         };
       }
     }
@@ -174,6 +177,7 @@ export function registerWbEditorTools(server: McpServer, client: WorkbenchClient
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text" as const, text: `Error performing ${action}: ${msg}${formatConnectionStatus(client)}` }],
+        isError: true,
         };
       }
     }
@@ -210,6 +214,7 @@ export function registerWbEditorTools(server: McpServer, client: WorkbenchClient
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text" as const, text: `Error opening resource: ${msg}${formatConnectionStatus(client)}` }],
+        isError: true,
         };
       }
     }

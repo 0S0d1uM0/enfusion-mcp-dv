@@ -72,6 +72,7 @@ export function registerModCreate(
               text: "No project path configured. Set ENFUSION_PROJECT_PATH environment variable or provide projectPath parameter.",
             },
           ],
+          isError: true,
         };
       }
 
@@ -81,6 +82,7 @@ export function registerModCreate(
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text", text: `Invalid addon name: ${msg}` }],
+        isError: true,
         };
       }
 
@@ -267,6 +269,7 @@ export function registerModCreate(
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text", text: `Error creating addon: ${msg}` }],
+        isError: true,
         };
       }
     }

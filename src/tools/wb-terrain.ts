@@ -33,6 +33,7 @@ export function registerWbTerrain(server: McpServer, client: WorkbenchClient): v
                 text: "Error: `x` and `z` coordinates are required for getHeight.",
               },
             ],
+            isError: true,
           };
         }
 
@@ -76,6 +77,7 @@ export function registerWbTerrain(server: McpServer, client: WorkbenchClient): v
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text" as const, text: `Error querying terrain: ${msg}${formatConnectionStatus(client)}` }],
+        isError: true,
         };
       }
     }

@@ -52,6 +52,7 @@ export function registerWbScriptEditor(server: McpServer, client: WorkbenchClien
                 text: `Error: \`line\` number is required for the "${action}" action.`,
               },
             ],
+            isError: true,
           };
         }
 
@@ -63,6 +64,7 @@ export function registerWbScriptEditor(server: McpServer, client: WorkbenchClien
                 text: `Error: \`text\` is required for the "${action}" action.`,
               },
             ],
+            isError: true,
           };
         }
 
@@ -74,6 +76,7 @@ export function registerWbScriptEditor(server: McpServer, client: WorkbenchClien
                 text: `Error: \`path\` is required for the "openFile" action.`,
               },
             ],
+            isError: true,
           };
         }
 
@@ -181,6 +184,7 @@ export function registerWbScriptEditor(server: McpServer, client: WorkbenchClien
               text: `Error in script editor (${action}): ${msg}${formatConnectionStatus(client)}`,
             },
           ],
+          isError: true,
         };
       }
     }

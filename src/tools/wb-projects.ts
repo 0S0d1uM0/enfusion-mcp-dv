@@ -30,6 +30,7 @@ export function registerWbProjects(server: McpServer, client: WorkbenchClient): 
                   text: "Error: `name` is required for the open action. Provide the .gproj file path or addon name.",
                 },
               ],
+              isError: true,
             };
           }
 
@@ -57,6 +58,7 @@ export function registerWbProjects(server: McpServer, client: WorkbenchClient): 
                   text: "Error: `name` is required for the locate action.",
                 },
               ],
+              isError: true,
             };
           }
 
@@ -115,6 +117,7 @@ export function registerWbProjects(server: McpServer, client: WorkbenchClient): 
               text: `Error querying projects (${action}): ${msg}${formatConnectionStatus(client)}`,
             },
           ],
+          isError: true,
         };
       }
     }

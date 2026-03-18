@@ -43,6 +43,7 @@ export function registerProjectWrite(server: McpServer, config: Config): void {
               text: "No project path configured. Set ENFUSION_PROJECT_PATH environment variable or provide projectPath parameter.",
             },
           ],
+          isError: true,
         };
       }
 
@@ -68,6 +69,7 @@ export function registerProjectWrite(server: McpServer, config: Config): void {
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text", text: `Error writing file: ${msg}` }],
+        isError: true,
         };
       }
     }

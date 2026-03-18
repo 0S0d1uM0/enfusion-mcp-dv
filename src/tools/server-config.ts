@@ -128,6 +128,7 @@ export function registerServerConfig(
           content: [
             { type: "text", text: `Error creating server config: ${msg}` },
           ],
+          isError: true,
         };
       }
     }

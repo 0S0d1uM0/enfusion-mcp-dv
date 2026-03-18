@@ -65,6 +65,7 @@ export function registerWbClipboard(server: McpServer, client: WorkbenchClient):
               text: `Error with clipboard (${action}): ${msg}${formatConnectionStatus(client)}`,
             },
           ],
+          isError: true,
         };
       }
     }

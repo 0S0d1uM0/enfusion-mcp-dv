@@ -432,12 +432,14 @@ export function registerAnimationGraphInspect(
                   text: "No project path configured. Set ENFUSION_PROJECT_PATH or provide projectPath.",
                 },
               ],
+              isError: true,
             };
           }
           const fullPath = validateProjectPath(basePath, filePath);
           if (!existsSync(fullPath)) {
             return {
               content: [{ type: "text", text: `File not found: ${filePath}` }],
+            isError: true,
             };
           }
           content = readFileSync(fullPath, "utf-8");
@@ -460,6 +462,7 @@ export function registerAnimationGraphInspect(
                     text: `File not found in game data: ${filePath}`,
                   },
                 ],
+                isError: true,
               };
             }
           }
@@ -470,6 +473,7 @@ export function registerAnimationGraphInspect(
           content: [
             { type: "text", text: `Error reading file: ${msg}` },
           ],
+          isError: true,
         };
       }
 

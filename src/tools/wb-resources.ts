@@ -93,6 +93,7 @@ export function registerWbResources(server: McpServer, client: WorkbenchClient):
               text: `Error managing resource "${path}" (${action}): ${msg}${formatConnectionStatus(client)}`,
             },
           ],
+          isError: true,
         };
       }
     }

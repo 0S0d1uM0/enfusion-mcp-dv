@@ -32,6 +32,7 @@ export function registerWbReload(server: McpServer, client: WorkbenchClient): vo
         const msg = e instanceof Error ? e.message : String(e);
         return {
           content: [{ type: "text" as const, text: `Error reloading: ${msg}${formatConnectionStatus(client)}` }],
+        isError: true,
         };
       }
     }

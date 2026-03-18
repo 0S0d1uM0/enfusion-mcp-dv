@@ -48,6 +48,7 @@ export function registerWbLocalization(server: McpServer, client: WorkbenchClien
                 text: `Error: \`itemId\` is required for the "${action}" action.`,
               },
             ],
+            isError: true,
           };
         }
 
@@ -59,6 +60,7 @@ export function registerWbLocalization(server: McpServer, client: WorkbenchClien
                 text: "Error: `property` is required for the modify action.",
               },
             ],
+            isError: true,
           };
         }
 
@@ -116,6 +118,7 @@ export function registerWbLocalization(server: McpServer, client: WorkbenchClien
               text: `Error in localization (${action}): ${msg}${formatConnectionStatus(client)}`,
             },
           ],
+          isError: true,
         };
       }
     }
