@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { WorkbenchClient } from "../workbench/client.js";
 import { formatConnectionStatus, requireEditMode } from "../workbench/status.js";
 
-const MUTATING_LAYER_ACTIONS = new Set(["create", "delete", "rename"]);
+const MUTATING_LAYER_ACTIONS = new Set(["create", "delete", "rename", "toggleVisibility"]);
 
 export function registerWbLayers(server: McpServer, client: WorkbenchClient): void {
   server.registerTool(
@@ -22,6 +22,9 @@ export function registerWbLayers(server: McpServer, client: WorkbenchClient): vo
             "setVisibility",
             "lock",
             "unlock",
+            "isVisible",
+            "getInfo",
+            "toggleVisibility",
           ])
           .describe("Layer management action to perform"),
         subScene: z
@@ -90,6 +93,26 @@ export function registerWbLayers(server: McpServer, client: WorkbenchClient): vo
           return { content: [{ type: "text" as const, text: lines.join("\n") + formatConnectionStatus(client) }] };
         }
 
+        if (action === "isVisible" || action === "getInfo") {
+          const lines = [`**Layer ${layerPath || result.layerID}**\n`];
+          if (result.layerVisible !== undefined) lines.push(`- **Visible:** ${result.layerVisible}`);
+          if (result.layerLocked !== undefined) lines.push(`- **Locked:** ${result.layerLocked}`);
+          if (result.layerActive !== undefined) lines.push(`- **Active:** ${result.layerActive}`);
+          if (result.layerEntityCount !== undefined) lines.push(`- **Entities:** ${result.layerEntityCount}`);
+          if (result.layerID !== undefined) lines.push(`- **Layer ID:** ${result.layerID}`);
+          return { content: [{ type: "text" as const, text: lines.join("\n") + formatConnectionStatus(client) }] };
+        }
+
+        if (action === "toggleVisibility") {
+          const nowVisible = result.layerVisible;
+          return {
+            content: [{
+              type: "text" as const,
+              text: `**Layer Toggled**\n\nLayer "${layerPath}" is now ${nowVisible ? "visible" : "hidden"}${formatConnectionStatus(client)}`,
+            }],
+          };
+        }
+
         const actionLabels: Record<string, string> = {
           create: `Created layer "${name || "(unnamed)"}"${parentPath ? ` under ${parentPath}` : ""}`,
           delete: `Deleted layer "${layerPath}"`,
@@ -98,6 +121,9 @@ export function registerWbLayers(server: McpServer, client: WorkbenchClient): vo
           setVisibility: `Set "${layerPath}" visibility to ${visible ? "visible" : "hidden"}`,
           lock: `Locked layer "${layerPath}"`,
           unlock: `Unlocked layer "${layerPath}"`,
+          isVisible: `Queried visibility of layer "${layerPath}"`,
+          getInfo: `Got info for layer "${layerPath}"`,
+          toggleVisibility: `Toggled visibility of layer "${layerPath}"`,
         };
 
         return {

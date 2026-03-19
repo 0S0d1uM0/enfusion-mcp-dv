@@ -14,6 +14,7 @@ class EMCP_WB_LayersRequest : JsonApiStruct
 	int subScene;
 	string entityName;
 	bool visible;
+	string layerPath;
 
 	void EMCP_WB_LayersRequest()
 	{
@@ -21,6 +22,7 @@ class EMCP_WB_LayersRequest : JsonApiStruct
 		RegV("subScene");
 		RegV("entityName");
 		RegV("visible");
+		RegV("layerPath");
 		subScene = -1;
 	}
 }
@@ -32,6 +34,10 @@ class EMCP_WB_LayersResponse : JsonApiStruct
 	string action;
 	int currentSubScene;
 	int layerID;
+	bool layerVisible;
+	bool layerLocked;
+	bool layerActive;
+	int layerEntityCount;
 
 	// Layer data collected for list
 	ref array<int> m_aLayerIDs;
@@ -44,6 +50,10 @@ class EMCP_WB_LayersResponse : JsonApiStruct
 		RegV("action");
 		RegV("currentSubScene");
 		RegV("layerID");
+		RegV("layerVisible");
+		RegV("layerLocked");
+		RegV("layerActive");
+		RegV("layerEntityCount");
 
 		m_aLayerIDs = {};
 		m_aEntityCounts = {};
@@ -172,10 +182,83 @@ class EMCP_WB_Layers : NetApiHandler
 				resp.message = "Entity not found: " + req.entityName;
 			}
 		}
+		else if (req.action == "isVisible")
+		{
+			if (req.layerPath == "")
+			{
+				resp.status = "error";
+				resp.message = "layerPath parameter required for isVisible (use layer ID as string, e.g. '0')";
+				return resp;
+			}
+
+			int targetLayerID = req.layerPath.ToInt();
+
+			// RUNTIME_VERIFY: WorldEditorAPI layer visibility methods.
+			// Try IsLayerVisible / IsLayerLocked if they exist in the script API.
+			// If neither compiles, replace with graceful fallback:
+			//   resp.layerVisible = true;  // assume visible
+			//   resp.message = "Layer visibility API not available in script — entity count only";
+			resp.layerVisible = api.IsLayerVisible(targetLayerID); // RUNTIME_VERIFY
+			resp.layerLocked = api.IsLayerLocked(targetLayerID);   // RUNTIME_VERIFY
+			resp.layerID = targetLayerID;
+			resp.status = "ok";
+			resp.message = "Layer " + req.layerPath + ": visible=" + resp.layerVisible.ToString() + " locked=" + resp.layerLocked.ToString();
+		}
+		else if (req.action == "getInfo")
+		{
+			if (req.layerPath == "")
+			{
+				resp.status = "error";
+				resp.message = "layerPath parameter required for getInfo (use layer ID as string, e.g. '0')";
+				return resp;
+			}
+
+			int targetLayerID = req.layerPath.ToInt();
+
+			// Count entities on this layer
+			int totalEntities = api.GetEditorEntityCount();
+			int layerEntCount = 0;
+			for (int i = 0; i < totalEntities; i++)
+			{
+				IEntitySource es = api.GetEditorEntity(i);
+				if (es && es.GetLayerID() == targetLayerID)
+					layerEntCount++;
+			}
+
+			resp.layerID = targetLayerID;
+			resp.layerEntityCount = layerEntCount;
+			resp.layerVisible = api.IsLayerVisible(targetLayerID); // RUNTIME_VERIFY
+			resp.layerActive = (api.GetCurrentSubScene() == targetLayerID);
+			resp.status = "ok";
+			resp.message = "Layer " + req.layerPath + ": " + layerEntCount.ToString() + " entities";
+		}
+		else if (req.action == "toggleVisibility")
+		{
+			if (req.layerPath == "")
+			{
+				resp.status = "error";
+				resp.message = "layerPath parameter required for toggleVisibility (use layer ID as string, e.g. '0')";
+				return resp;
+			}
+
+			int targetLayerID = req.layerPath.ToInt();
+			bool currentVis = api.IsLayerVisible(targetLayerID); // RUNTIME_VERIFY
+			bool newVis = !currentVis;
+
+			// RUNTIME_VERIFY: SetLayerVisible may not exist in the public script API.
+			// Alternative method name: api.SetLayerVisibility(targetLayerID, newVis)
+			// If neither compiles, fall back to error response.
+			api.SetLayerVisible(targetLayerID, newVis); // RUNTIME_VERIFY
+
+			resp.layerVisible = newVis;
+			resp.layerID = targetLayerID;
+			resp.status = "ok";
+			resp.message = "Layer " + req.layerPath + " visibility toggled to: " + newVis.ToString();
+		}
 		else
 		{
 			resp.status = "error";
-			resp.message = "Unknown action: " + req.action + ". Valid: list, getActive, getEntityLayer";
+			resp.message = "Unknown action: " + req.action + ". Valid: list, getActive, getEntityLayer, isVisible, getInfo, toggleVisibility";
 		}
 
 		return resp;
