@@ -374,10 +374,19 @@ class EMCP_WB_ModifyEntity : NetApiHandler
 				}
 			}
 
-			int numVars = compSrc ? compSrc.GetNumVars() : entSrc.GetNumVars();
+			int numVars;
+			if (compSrc)
+				numVars = compSrc.GetNumVars();
+			else
+				numVars = entSrc.GetNumVars();
+
 			for (int v = 0; v < numVars; v++)
 			{
-				string varName = compSrc ? compSrc.GetVarName(v) : entSrc.GetVarName(v);
+				string varName;
+				if (compSrc)
+					varName = compSrc.GetVarName(v);
+				else
+					varName = entSrc.GetVarName(v);
 				string varValue = "";
 				if (compSrc)
 					compSrc.Get(varName, varValue);
@@ -392,8 +401,9 @@ class EMCP_WB_ModifyEntity : NetApiHandler
 			}
 
 			resp.status = "ok";
-			resp.message = "Listed " + resp.m_aProperties.Count().ToString() + " properties" +
-				(req.propertyPath != "" ? " of " + req.propertyPath : "");
+			resp.message = "Listed " + resp.m_aProperties.Count().ToString() + " properties";
+			if (req.propertyPath != "")
+				resp.message = resp.message + " of " + req.propertyPath;
 		}
 		else if (req.action == "listArrayItems")
 		{

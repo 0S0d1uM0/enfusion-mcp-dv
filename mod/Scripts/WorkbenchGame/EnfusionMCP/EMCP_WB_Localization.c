@@ -231,8 +231,9 @@ class EMCP_WB_Localization : NetApiHandler
 			}
 
 			resp.status = "ok";
-			resp.message = "String table has " + childCount.ToString() + " items" +
-				(childCount > 500 ? " (capped at 500)" : "");
+			resp.message = "String table has " + childCount.ToString() + " items";
+			if (childCount > 500)
+				resp.message = resp.message + " (capped at 500)";
 		}
 		else if (req.action == "listLanguages")
 		{

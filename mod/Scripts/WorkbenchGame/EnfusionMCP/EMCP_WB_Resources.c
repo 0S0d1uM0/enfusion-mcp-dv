@@ -146,7 +146,11 @@ class EMCP_WB_Resources : NetApiHandler
 				// Extract filename from path
 				array<string> segments = {};
 				fullPath.Split("/", segments, false);
-				string filename = (segments.Count() == 0) ? fullPath : segments[segments.Count() - 1];
+				string filename;
+				if (segments.Count() == 0)
+					filename = fullPath;
+				else
+					filename = segments[segments.Count() - 1];
 
 				// Detect extension as type
 				// RUNTIME_VERIFY: string.LastIndexOf may not exist in EnforceScript; using IndexOf as fallback.
@@ -163,7 +167,9 @@ class EMCP_WB_Resources : NetApiHandler
 			}
 
 			resp.status = "ok";
-			resp.message = "Found " + total.ToString() + " resources" + (total > 200 ? " (capped at 200)" : "");
+			resp.message = "Found " + total.ToString() + " resources";
+			if (total > 200)
+				resp.message = resp.message + " (capped at 200)";
 		}
 		else
 		{
