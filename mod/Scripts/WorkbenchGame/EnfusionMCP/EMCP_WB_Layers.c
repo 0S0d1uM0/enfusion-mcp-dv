@@ -193,13 +193,9 @@ class EMCP_WB_Layers : NetApiHandler
 
 			int targetLayerID = req.layerPath.ToInt();
 
-			// RUNTIME_VERIFY: WorldEditorAPI layer visibility methods.
-			// Try IsLayerVisible / IsLayerLocked if they exist in the script API.
-			// If neither compiles, replace with graceful fallback:
-			//   resp.layerVisible = true;  // assume visible
-			//   resp.message = "Layer visibility API not available in script — entity count only";
-			resp.layerVisible = api.IsLayerVisible(targetLayerID); // RUNTIME_VERIFY
-			resp.layerLocked = api.IsLayerLocked(targetLayerID);   // RUNTIME_VERIFY
+			int subScene = resp.currentSubScene;
+			resp.layerVisible = api.IsEntityLayerVisible(subScene, targetLayerID);
+			resp.layerLocked = api.IsEntityLayerLocked(subScene, targetLayerID);
 			resp.layerID = targetLayerID;
 			resp.status = "ok";
 			resp.message = "Layer " + req.layerPath + ": visible=" + resp.layerVisible.ToString() + " locked=" + resp.layerLocked.ToString();
@@ -225,40 +221,43 @@ class EMCP_WB_Layers : NetApiHandler
 					layerEntCount++;
 			}
 
+			int subScene2 = resp.currentSubScene;
 			resp.layerID = targetLayerID;
 			resp.layerEntityCount = layerEntCount;
-			resp.layerVisible = api.IsLayerVisible(targetLayerID); // RUNTIME_VERIFY
+			resp.layerVisible = api.IsEntityLayerVisible(subScene2, targetLayerID);
 			resp.layerActive = (api.GetCurrentSubScene() == targetLayerID);
 			resp.status = "ok";
 			resp.message = "Layer " + req.layerPath + ": " + layerEntCount.ToString() + " entities";
 		}
-		else if (req.action == "toggleVisibility")
+		else if (req.action == "toggleLock")
 		{
 			if (req.layerPath == "")
 			{
 				resp.status = "error";
-				resp.message = "layerPath parameter required for toggleVisibility (use layer ID as string, e.g. '0')";
+				resp.message = "layerPath parameter required for toggleLock (use layer ID as string, e.g. '0')";
 				return resp;
 			}
 
 			int targetLayerID = req.layerPath.ToInt();
-			bool currentVis = api.IsLayerVisible(targetLayerID); // RUNTIME_VERIFY
-			bool newVis = !currentVis;
+			int subScene3 = resp.currentSubScene;
+			bool isLocked = api.IsEntityLayerLocked(subScene3, targetLayerID);
+			if (isLocked)
+				api.UnlockEntityLayer(subScene3, targetLayerID);
+			else
+				api.LockEntityLayer(subScene3, targetLayerID);
 
-			// RUNTIME_VERIFY: SetLayerVisible may not exist in the public script API.
-			// Alternative method name: api.SetLayerVisibility(targetLayerID, newVis)
-			// If neither compiles, fall back to error response.
-			api.SetLayerVisible(targetLayerID, newVis); // RUNTIME_VERIFY
-
-			resp.layerVisible = newVis;
+			resp.layerLocked = !isLocked;
 			resp.layerID = targetLayerID;
 			resp.status = "ok";
-			resp.message = "Layer " + req.layerPath + " visibility toggled to: " + newVis.ToString();
+			if (isLocked)
+				resp.message = "Layer " + req.layerPath + " unlocked";
+			else
+				resp.message = "Layer " + req.layerPath + " locked";
 		}
 		else
 		{
 			resp.status = "error";
-			resp.message = "Unknown action: " + req.action + ". Valid: list, getActive, getEntityLayer, isVisible, getInfo, toggleVisibility";
+			resp.message = "Unknown action: " + req.action + ". Valid: list, getActive, getEntityLayer, isVisible, getInfo, toggleLock";
 		}
 
 		return resp;

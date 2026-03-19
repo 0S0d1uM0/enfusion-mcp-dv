@@ -120,56 +120,11 @@ class EMCP_WB_Resources : NetApiHandler
 		}
 		else if (req.action == "browse")
 		{
-			array<string> foundPaths = {};
-
-			// RUNTIME_VERIFY: Workbench.SearchResources(prefix, outArray) must be confirmed at compile time.
-			// Alternative: resMgr may expose a search method instead.
-			Workbench.SearchResources(req.path, foundPaths);
-
-			int total = foundPaths.Count();
-			resp.entryCount = total;
-
-			if (total == 0)
-			{
-				resp.status = "ok";
-				resp.message = "No resources found matching: " + req.path;
-				return resp;
-			}
-
-			int cap = total;
-			if (cap > 200) cap = 200;
-
-			for (int i = 0; i < cap; i++)
-			{
-				string fullPath = foundPaths[i];
-
-				// Extract filename from path
-				array<string> segments = {};
-				fullPath.Split("/", segments, false);
-				string filename;
-				if (segments.Count() == 0)
-					filename = fullPath;
-				else
-					filename = segments[segments.Count() - 1];
-
-				// Detect extension as type
-				// RUNTIME_VERIFY: string.LastIndexOf may not exist in EnforceScript; using IndexOf as fallback.
-				string ext = "";
-				int dotIdx = filename.IndexOf(".");
-				if (dotIdx >= 0)
-					ext = filename.Substring(dotIdx + 1, filename.Length() - dotIdx - 1);
-
-				EMCP_WB_ResourceEntry entry = new EMCP_WB_ResourceEntry();
-				entry.m_sName = filename;
-				entry.m_sPath = fullPath;
-				entry.m_sType = ext;
-				resp.m_aEntries.Insert(entry);
-			}
-
-			resp.status = "ok";
-			resp.message = "Found " + total.ToString() + " resources";
-			if (total > 200)
-				resp.message = resp.message + " (capped at 200)";
+			// Workbench.SearchResources requires a WorkbenchSearchResourcesCallback subclass
+			// whose exact callback method signature is not publicly documented.
+			// Until the callback pattern is confirmed at runtime, return a helpful error.
+			resp.status = "error";
+			resp.message = "browse action not yet implemented: Workbench.SearchResources requires a WorkbenchSearchResourcesCallback subclass. Use wb_open_resource or project_browse instead.";
 		}
 		else
 		{

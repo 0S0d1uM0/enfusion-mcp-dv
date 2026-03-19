@@ -78,6 +78,7 @@ describe("generateScript", () => {
       scriptType: "component",
     });
     expect(code).toContain("class TAG_MyComponent : ScriptComponent");
+    expect(code).toContain("class TAG_MyComponentClass : ScriptComponentClass");
     expect(code).toContain("[ComponentEditorProps(");
     expect(code).toContain("override void EOnInit(IEntity owner)");
     expect(code).toContain("override void OnPostInit(IEntity owner)");
@@ -91,6 +92,7 @@ describe("generateScript", () => {
       parentClass: "SCR_BaseEditableEntityComponent",
     });
     expect(code).toContain("class TAG_MyComp : SCR_BaseEditableEntityComponent");
+    expect(code).toContain("class TAG_MyCompClass : SCR_BaseEditableEntityComponentClass");
   });
 
   it("generates gamemode with default methods", () => {

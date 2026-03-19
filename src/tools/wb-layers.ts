@@ -3,14 +3,14 @@ import { z } from "zod";
 import type { WorkbenchClient } from "../workbench/client.js";
 import { formatConnectionStatus, requireEditMode } from "../workbench/status.js";
 
-const MUTATING_LAYER_ACTIONS = new Set(["create", "delete", "rename", "toggleVisibility"]);
+const MUTATING_LAYER_ACTIONS = new Set(["create", "delete", "rename", "toggleLock"]);
 
 export function registerWbLayers(server: McpServer, client: WorkbenchClient): void {
   server.registerTool(
     "wb_layers",
     {
       description:
-        "Manage layers in the World Editor. List layers, create/delete layers, rename, set active layer, toggle visibility, or lock/unlock layers. Create/delete/rename only work in edit mode.",
+        "Manage layers in the World Editor. List layers, create/delete layers, rename, set active layer, query visibility, get layer info, or toggle lock. Create/delete/rename/toggleLock only work in edit mode.",
       inputSchema: {
         action: z
           .enum([
@@ -24,7 +24,7 @@ export function registerWbLayers(server: McpServer, client: WorkbenchClient): vo
             "unlock",
             "isVisible",
             "getInfo",
-            "toggleVisibility",
+            "toggleLock",
           ])
           .describe("Layer management action to perform"),
         subScene: z
@@ -103,12 +103,12 @@ export function registerWbLayers(server: McpServer, client: WorkbenchClient): vo
           return { content: [{ type: "text" as const, text: lines.join("\n") + formatConnectionStatus(client) }] };
         }
 
-        if (action === "toggleVisibility") {
-          const nowVisible = result.layerVisible;
+        if (action === "toggleLock") {
+          const nowLocked = result.layerLocked;
           return {
             content: [{
               type: "text" as const,
-              text: `**Layer Toggled**\n\nLayer "${layerPath}" is now ${nowVisible ? "visible" : "hidden"}${formatConnectionStatus(client)}`,
+              text: `**Layer Lock Toggled**\n\nLayer "${layerPath}" is now ${nowLocked ? "locked" : "unlocked"}${formatConnectionStatus(client)}`,
             }],
           };
         }
@@ -123,7 +123,7 @@ export function registerWbLayers(server: McpServer, client: WorkbenchClient): vo
           unlock: `Unlocked layer "${layerPath}"`,
           isVisible: `Queried visibility of layer "${layerPath}"`,
           getInfo: `Got info for layer "${layerPath}"`,
-          toggleVisibility: `Toggled visibility of layer "${layerPath}"`,
+          toggleLock: `Toggled lock on layer "${layerPath}"`,
         };
 
         return {
