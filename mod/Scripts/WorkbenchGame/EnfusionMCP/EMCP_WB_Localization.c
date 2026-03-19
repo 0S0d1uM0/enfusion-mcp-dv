@@ -22,6 +22,14 @@ class EMCP_WB_LocalizationRequest : JsonApiStruct
 	}
 }
 
+class EMCP_WB_LocalizationEntry
+{
+	string m_sId;
+	string m_sEnUs;
+	string m_sTarget;
+	string m_sComment;
+}
+
 class EMCP_WB_LocalizationResponse : JsonApiStruct
 {
 	string status;
@@ -29,6 +37,7 @@ class EMCP_WB_LocalizationResponse : JsonApiStruct
 	string action;
 	string itemId;
 	int tableItemCount;
+	ref array<ref EMCP_WB_LocalizationEntry> m_aEntries;
 
 	void EMCP_WB_LocalizationResponse()
 	{
@@ -37,6 +46,26 @@ class EMCP_WB_LocalizationResponse : JsonApiStruct
 		RegV("action");
 		RegV("itemId");
 		RegV("tableItemCount");
+		m_aEntries = {};
+	}
+
+	override void OnPack()
+	{
+		if (m_aEntries.Count() > 0)
+		{
+			StartArray("entries");
+			for (int i = 0; i < m_aEntries.Count(); i++)
+			{
+				EMCP_WB_LocalizationEntry e = m_aEntries[i];
+				StartObject("");
+				StoreString("id", e.m_sId);
+				StoreString("en_us", e.m_sEnUs);
+				StoreString("target", e.m_sTarget);
+				StoreString("comment", e.m_sComment);
+				EndObject();
+			}
+			EndArray();
+		}
 	}
 }
 
@@ -163,22 +192,40 @@ class EMCP_WB_Localization : NetApiHandler
 		else if (req.action == "getTable")
 		{
 			BaseContainer table = locEditor.GetTable();
-			if (table)
-			{
-				resp.tableItemCount = table.GetNumChildren();
-				resp.status = "ok";
-				resp.message = "String table has " + resp.tableItemCount.ToString() + " items";
-			}
-			else
+			if (!table)
 			{
 				resp.status = "error";
 				resp.message = "Could not get string table (no localization file loaded?)";
+				return resp;
 			}
+
+			int childCount = table.GetNumChildren();
+			resp.tableItemCount = childCount;
+			int cap = childCount;
+			if (cap > 500) cap = 500;
+
+			for (int i = 0; i < cap; i++)
+			{
+				BaseContainer child = table.GetChild(i);
+				if (!child)
+					continue;
+
+				EMCP_WB_LocalizationEntry entry = new EMCP_WB_LocalizationEntry();
+				child.Get("Id", entry.m_sId);
+				child.Get("en_us", entry.m_sEnUs);
+				child.Get("target", entry.m_sTarget);
+				child.Get("comment", entry.m_sComment);
+				resp.m_aEntries.Insert(entry);
+			}
+
+			resp.status = "ok";
+			resp.message = "String table has " + childCount.ToString() + " items" +
+				(childCount > 500 ? " (capped at 500)" : "");
 		}
 		else
 		{
 			resp.status = "error";
-			resp.message = "Unknown action: " + req.action + ". Valid: insert, delete, modify, getTable";
+			resp.message = "Unknown action: " + req.action + ". Valid: insert, delete, modify, getTable, listLanguages";
 		}
 
 		return resp;
