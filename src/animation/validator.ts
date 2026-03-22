@@ -132,7 +132,8 @@ export function validateGraph(
 
     // V07: AGF not registered in AGR
     if (agfPath) {
-      const registered = agr.agfReferences.some(ref => ref.includes(agfPath));
+      const agfBasename = agfPath.replace(/\\/g, "/").split("/").pop() ?? agfPath;
+      const registered = agr.agfReferences.some(ref => ref.replace(/\\/g, "/").split("/").pop() === agfBasename);
       if (!registered) {
         issues.push({ id: "V07", severity: "error", message: `AGF "${agfPath}" is not listed in AGR GraphFilesResourceNames` });
       }

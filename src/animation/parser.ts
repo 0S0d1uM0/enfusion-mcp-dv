@@ -131,6 +131,9 @@ function findAllNodes(text: string): Array<{ type: string; name: string; body: s
     }
     const body = text.slice(openBrace + 1, i - 1);
     results.push({ type, name, body });
+    // Skip past the extracted body so nested AnimSrcNode* blocks are not
+    // reported as top-level nodes (they are parsed via parseNodeProperties).
+    openRe.lastIndex = i;
   }
   return results;
 }
