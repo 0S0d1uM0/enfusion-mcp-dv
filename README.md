@@ -189,10 +189,6 @@ npm run build
 npm test         # 187 tests
 ```
 
-## Documentation
-
-Full documentation is on the [GitHub Wiki](https://github.com/steffenbk/enfusion-mcp-BK/wiki).
-
 ## License
 
 MIT
