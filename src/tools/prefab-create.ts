@@ -86,13 +86,15 @@ export function registerPrefabCreate(server: McpServer, config: Config): void {
         let ancestorComponents: ComponentDef[] | undefined;
         let ancestryNote = "";
 
-        if (parentPrefab && includeAncestry !== false) {
+        if (parentPrefab && includeAncestry) {
           const { levels, warnings } = walkChain(parentPrefab, config, projectPath);
           if (levels.length > 0) {
             const merged = mergeAncestryComponents(levels);
             ancestorComponents = Array.from(merged.values()).map(({ comp }) => ({
               type: comp.typeName,
               guid: comp.guid,
+              // Properties intentionally empty: components are listed as GUID-matched
+              // override slots, not property copies. Fill values manually as needed.
               properties: {},
             }));
             ancestryNote = `\n\nAncestry resolved: ${levels.length} ancestor level(s), ${ancestorComponents.length} inherited component(s) pre-populated.`;
@@ -129,7 +131,7 @@ export function registerPrefabCreate(server: McpServer, config: Config): void {
               content: [
                 {
                   type: "text",
-                  text: `File already exists: ${subdir}/${filename}\n\nGenerated content (not written):\n\n\`\`\`\n${content}\n\`\`\``,
+                  text: `File already exists: ${subdir}/${filename}\n\nGenerated content (not written):\n\n\`\`\`\n${content}\n\`\`\`${ancestryNote}`,
                 },
               ],
             };
