@@ -69,7 +69,7 @@ export function registerWbEntityDuplicate(
       }
 
       // Resolve addon directory
-      const addonDir = resolveAddonDir(config.projectPath, modName);
+      const addonDir = resolveAddonDir(config.projectPath, modName ?? config.defaultMod);
       if (!addonDir) {
         return {
           content: [

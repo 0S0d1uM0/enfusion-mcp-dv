@@ -23,6 +23,10 @@ export interface Config {
   workbenchHost: string;
   /** Workbench NET API port (default 5775) */
   workbenchPort: number;
+  /** Default addon folder name used when modName is not specified in tool calls.
+   *  Prevents resolveAddonDir from picking the first addon alphabetically.
+   *  Set via ENFUSION_DEFAULT_MOD env var (e.g., "Crossbow"). */
+  defaultMod?: string;
 }
 
 const DEFAULT_WORKBENCH_PATH =
@@ -104,6 +108,9 @@ export function loadConfig(): Config {
     if (!isNaN(port) && port > 0 && port < 65536) {
       config.workbenchPort = port;
     }
+  }
+  if (process.env.ENFUSION_DEFAULT_MOD) {
+    config.defaultMod = process.env.ENFUSION_DEFAULT_MOD;
   }
 
   // Auto-derive gamePath from workbenchPath if not explicitly set
