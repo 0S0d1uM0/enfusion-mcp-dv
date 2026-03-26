@@ -16,7 +16,7 @@ import { parse, serialize, createNode } from "../formats/enfusion-text.js";
 import {
   walkChain,
   mergeAncestryComponents,
-  parseComponents,
+  parseTopLevelComponents,
 } from "../utils/prefab-ancestry.js";
 
 export function registerGameDuplicate(
@@ -177,8 +177,15 @@ export function registerGameDuplicate(
             // Get merged components from full ancestry
             const merged = mergeAncestryComponents(levels);
 
-            // Get GUIDs already present in the source file
-            const existingGuids = new Set(parseComponents(rawContent).keys());
+            // Top-level component GUIDs per ancestor level (excludes nested sub-components)
+            const topLevelByDepth = new Map<number, Set<string>>();
+            for (const level of levels) {
+              const topMap = parseTopLevelComponents(level.rawContent);
+              topLevelByDepth.set(level.depth, new Set(topMap.keys()));
+            }
+
+            // Existing top-level GUIDs in the leaf file
+            const existingGuids = new Set(parseTopLevelComponents(rawContent).keys());
 
             // Find or create the components child node
             let componentsNode = rootNode.children.find((c) => c.type === "components");
@@ -188,8 +195,14 @@ export function registerGameDuplicate(
               if (existingGuids.has(guid)) continue; // already declared in leaf
               if (source.depth === levels.length - 1) continue; // it's in the leaf itself
 
-              // Build a minimal component node with the original GUID preserved
+              // Only inject top-level components — skip nested sub-components
+              // (e.g. SightsComponent inside WeaponComponent, UserActionContext inside ActionsManagerComponent)
+              if (!topLevelByDepth.get(source.depth)?.has(guid)) continue;
+
+              // Inject with original ancestor body so all property values are present
               const compNode = createNode(comp.typeName, { id: `{${comp.guid}}` });
+              compNode.rawContent = comp.rawBody;
+
               if (!componentsNode) {
                 componentsNode = createNode("components");
                 rootNode.children.push(componentsNode);

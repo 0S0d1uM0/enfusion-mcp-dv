@@ -31,6 +31,12 @@ export interface EnfusionNode {
   values: string[];
   /** Child nodes (blocks nested inside this node) */
   children: EnfusionNode[];
+  /**
+   * Optional raw string to emit verbatim inside the braces instead of serializing
+   * properties/values/children. Used when injecting ancestor components with their
+   * original content preserved exactly.
+   */
+  rawContent?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -393,6 +399,11 @@ function serializeNode(node: EnfusionNode, indent: number): string {
   // Inheritance
   if (node.inheritance !== undefined) {
     header += ` : "${escapeString(node.inheritance)}"`;
+  }
+
+  // If raw content is provided, emit it verbatim inside the braces and return early
+  if (node.rawContent !== undefined) {
+    return `${pad}${header} {${node.rawContent}${pad}}`;
   }
 
   parts.push(`${pad}${header} {`);

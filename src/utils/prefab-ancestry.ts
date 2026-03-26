@@ -184,6 +184,49 @@ export function walkChain(
   return { levels, warnings };
 }
 
+/**
+ * Like parseComponents but only returns DIRECT children of the components block
+ * (depth-0 entries). Skips nested sub-components such as SightsComponent inside
+ * WeaponComponent or UserActionContext inside ActionsManagerComponent.
+ */
+export function parseTopLevelComponents(content: string): Map<string, ParsedComponent> {
+  const result = new Map<string, ParsedComponent>();
+  const block = extractComponentsBlock(content);
+  if (!block) return result;
+
+  let i = 0;
+  const len = block.length;
+
+  while (i < len) {
+    // Skip whitespace / newlines between top-level entries
+    while (i < len && (block[i] === " " || block[i] === "\t" || block[i] === "\n" || block[i] === "\r")) i++;
+    if (i >= len) break;
+
+    // Try to match a component declaration at this position:  TypeName "{16HEX}"... {
+    const m = /^(\w+)\s+"\{([0-9A-Fa-f]{16})\}"[^\n{]*\{/.exec(block.slice(i));
+    if (m) {
+      const typeName = m[1];
+      const guid = m[2];
+      const openBrace = i + m[0].length - 1; // m[0] ends with "{"
+      let depth = 1;
+      let j = openBrace + 1;
+      while (j < len && depth > 0) {
+        if (block[j] === "{") depth++;
+        else if (block[j] === "}") depth--;
+        j++;
+      }
+      const rawBody = block.slice(openBrace + 1, j - 1);
+      result.set(guid, { guid, typeName, rawBody });
+      i = j; // jump past this component's closing brace entirely
+    } else {
+      // Non-component line (property, comment, etc.) — skip to end of line
+      while (i < len && block[i] !== "\n") i++;
+    }
+  }
+
+  return result;
+}
+
 // ── Merge ─────────────────────────────────────────────────────────────────────
 
 /**
