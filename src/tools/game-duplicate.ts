@@ -12,7 +12,6 @@ import type { WorkbenchClient } from "../workbench/client.js";
 import { validateProjectPath } from "../utils/safe-path.js";
 import { resolveGameDataPath, findLooseFile, resolveAddonDir } from "../utils/game-paths.js";
 import { generateGuid } from "../formats/guid.js";
-import { parse, serialize, createNode } from "../formats/enfusion-text.js";
 import {
   walkChain,
   mergeAncestryComponents,
@@ -134,7 +133,7 @@ export function registerGameDuplicate(
       // Validate and resolve the destination path
       let absDestPath: string;
       try {
-        absDestPath = validateProjectPath(addonDir, destPath);
+        absDestPath = validateProjectPath(addonDir, destPath.replace(/\\/g, "/"));
       } catch {
         return {
           content: [{ type: "text", text: `Invalid destination path: ${destPath}` }],
@@ -171,9 +170,6 @@ export function registerGameDuplicate(
 
         if (levels.length > 1) {
           try {
-            // Parse source into node tree
-            let rootNode = parse(rawContent);
-
             // Get merged components from full ancestry
             const merged = mergeAncestryComponents(levels);
 
@@ -187,36 +183,50 @@ export function registerGameDuplicate(
             // Existing top-level GUIDs in the leaf file
             const existingGuids = new Set(parseTopLevelComponents(rawContent).keys());
 
-            // Find or create the components child node
-            let componentsNode = rootNode.children.find((c) => c.type === "components");
+            // Build list of components to inject (as raw text fragments)
             const injected: string[] = [];
+            const fragments: string[] = [];
 
             for (const [guid, { comp, source }] of merged) {
               if (existingGuids.has(guid)) continue; // already declared in leaf
               if (source.depth === levels.length - 1) continue; // it's in the leaf itself
 
               // Only inject top-level components — skip nested sub-components
-              // (e.g. SightsComponent inside WeaponComponent, UserActionContext inside ActionsManagerComponent)
               if (!topLevelByDepth.get(source.depth)?.has(guid)) continue;
 
-              // Inject with original ancestor body so all property values are present
-              const compNode = createNode(comp.typeName, { id: `{${comp.guid}}` });
-              compNode.rawContent = comp.rawBody;
-
-              if (!componentsNode) {
-                componentsNode = createNode("components");
-                rootNode.children.push(componentsNode);
-              }
-              componentsNode.children.push(compNode);
+              // Build raw text fragment preserving original content exactly
+              fragments.push(`  ${comp.typeName} "{${comp.guid}}" {${comp.rawBody}  }`);
               injected.push(`${comp.typeName} (from [${source.depth}] ${source.path})`);
             }
 
-            // If flatten, strip parent reference
-            if (flatten) {
-              rootNode = { ...rootNode, inheritance: undefined };
+            if (fragments.length > 0) {
+              // Insert fragments into the components block using string manipulation
+              // (avoids lossy parse/serialize round-trip)
+              const componentsMatch = /^([ \t]*components\s*\{)/m.exec(finalContent);
+              if (componentsMatch) {
+                // Insert after "components {" opening
+                const insertPos = componentsMatch.index + componentsMatch[0].length;
+                finalContent =
+                  finalContent.slice(0, insertPos) +
+                  "\n" + fragments.join("\n") +
+                  finalContent.slice(insertPos);
+              } else {
+                // No components block — insert one before the final closing brace
+                const lastBrace = finalContent.lastIndexOf("}");
+                finalContent =
+                  finalContent.slice(0, lastBrace) +
+                  " components {\n" + fragments.join("\n") + "\n }\n" +
+                  finalContent.slice(lastBrace);
+              }
             }
 
-            finalContent = serialize(rootNode);
+            // If flatten, strip parent reference from the raw text
+            if (flatten) {
+              finalContent = finalContent.replace(
+                /^(\w+)\s*:\s*"[^"]*"\s*\{/m,
+                "$1 {"
+              );
+            }
 
             const levelCount = levels.length;
             ancestryNote = `\n\nAncestry: resolved ${levelCount} level(s), injected ${injected.length} inherited component(s).`;
@@ -259,7 +269,8 @@ export function registerGameDuplicate(
         try {
           const regResp = await client.call<{ status: string; message?: string }>(
             "EMCP_WB_Resources",
-            { action: "register", path: absDestPath, buildRuntime: false }
+            { action: "register", path: absDestPath, buildRuntime: false },
+            { timeout: 30000 }
           );
 
           const guidNote = regResp.status === "ok"
