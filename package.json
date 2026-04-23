@@ -7,7 +7,7 @@
     "enfusion-mcp": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json"
+    "build": "tsc -p tsconfig.build.json",
     "dev": "tsx src/index.ts",
     "scrape": "tsx scripts/scrape.ts",
     "scrape:remote": "tsx scripts/scrape.ts --source remote",
